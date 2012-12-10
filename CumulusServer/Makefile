@@ -21,12 +21,17 @@ endif
 OBJECT = $(OBJECTS:%=%.o)
 
 main: $(OBJECT)
-	@echo creating CumulusServer executable $(EXEC)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECT) $(LIBS)
+	echo creating CumulusServer executable $(EXEC)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECT) $(LIBS)
 
-$(OBJECT): 
-	@echo compiling $(@:%.o=%.cpp)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $(@) $(SOURCES)$(@:%.o=%.cpp)
+#$(OBJECT): 
+#	echo compiling $(@:%.o=%.cpp)
+#	$(CC) $(CFLAGS) $(INCLUDES) -c -o $(@) $(SOURCES)$(@:%.o=%.cpp)
+
+%.o : sources/%.cpp 
+	echo compiling $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 clean:
 	rm -f $(OBJECT) $(EXEC)
+

@@ -41,7 +41,7 @@ const char * g_logPriorities[] = { "FATAL","CRITIC" ,"ERROR","WARN","NOTE","INFO
 
 class CumulusServer: public ServerApplication , private Cumulus::Logger, private ApplicationKiller  {
 public:
-	CumulusServer(): _helpRequested(false),_isInteractive(true),_pLogFile(NULL) {
+	CumulusServer(): _helpRequested(false),_isInteractive(true),_pLogFile(NULL), _cfgFile("") {
 		
 	}
 	
@@ -60,8 +60,14 @@ private:
 
 	void initialize(Application& self) {
 		ServerApplication::initialize(self);
+
 		string dir = config().getString("application.dir","./");
-		loadConfiguration(dir+config().getString("application.baseName","CumulusServer")+".ini"); // load default configuration files, if present
+		string cfgfile = _cfgFile;
+		if(cfgfile.empty()) 
+			cfgfile = dir+config().getString("application.baseName","CumulusServer")+".ini";
+		std::cout<<"Using configuration file " << cfgfile.c_str() << std::endl;
+
+		loadConfiguration(cfgfile); // load default configuration files, if present
 		_isInteractive = isInteractive();
 		// logs
 		string logDir(config().getString("logs.directory",dir+"logs"));
@@ -85,6 +91,12 @@ private:
 
 	void defineOptions(OptionSet& options) {
 		ServerApplication::defineOptions(options);
+
+		options.addOption(
+			Option("cfgfile", "g", "Configuration file")
+				.required(false)
+				.argument("cfgfile")
+				.repeatable(true));
 
 		options.addOption(
 			Option("log", "l", "Log level argument, must be beetween 0 and 8 : nothing, fatal, critic, error, warn, note, info, debug, trace. Default value is 6 (info), all logs until info level are displayed.")
@@ -134,6 +146,8 @@ private:
 			_params.middle = true;
 		else if (name == "log")
 			Logs::SetLevel(atoi(value.c_str()));
+		else if (name == "cfgfile")
+			_cfgFile = value; 
 	}
 
 	void displayHelp() {
@@ -208,8 +222,8 @@ private:
 #if defined(POCO_OS_FAMILY_UNIX)
 				sigset_t sset;
 				sigemptyset(&sset);
-				if (!getenv("POCO_ENABLE_DEBUGGER"))
-					sigaddset(&sset, SIGINT);
+				//if (!getenv("POCO_ENABLE_DEBUGGER"))
+				//	sigaddset(&sset, SIGINT);
 				sigaddset(&sset, SIGQUIT);
 				sigaddset(&sset, SIGTERM);
 				sigprocmask(SIG_BLOCK, &sset, NULL);
@@ -246,6 +260,7 @@ private:
 	File*									_pLogFile;
 	FileOutputStream						_logStream;
 	FastMutex								_logMutex;
+	std::string		_cfgFile;
 };
 
 int main(int argc, char* argv[]) {

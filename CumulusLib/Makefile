@@ -6,8 +6,8 @@ ifeq ($(shell uname -s),Darwin)
     LIB=libCumulus.dylib
 	SHARED=-dynamiclib -install_name ./../CumulusLib/$(LIB)
 else
-	LIB=libCumulus.so
-	SHARED=-shared
+	LIB=libCumulus.a #libCumulus.so
+	SHARED=  #-shared
 endif
 SOURCES=./sources/
 CFLAGS+=-D CUMULUS_LOGS
@@ -15,13 +15,20 @@ LIBS ?= -L/usr/local/lib/ -lPocoFoundation -lPocoXML -lPocoUtil -lPocoNet -lcryp
 INCLUDES = -I/usr/local/include/ -I./include/
 OBJECT = $(OBJECTS:%=%.o)
 
-main: $(OBJECT)
-	@echo creating dynamic lib $(LIB)
-	@$(CC) -fPIC $(SHARED) $(OBJECT) -o $(LIB) $(LIBS)
+.PHONY: all
+all: $(OBJECT)
+	echo creating static lib $(LIB)
+	#$(CC) $(SHARED) $(OBJECT) -o $(LIB) $(LIBS)
+	ar -cru $(LIB) $(OBJECT) 
+	ranlib $(LIB)
 
-$(OBJECT): 
-	@echo compiling $(@:%.o=%.cpp)
-	@$(CC) -fpic $(CFLAGS) $(INCLUDES) -c -o $(@) $(SOURCES)$(@:%.o=%.cpp)
+#$(OBJECT): 
+#	echo compiling $(@:%.o=%.cpp)
+#	$(CC) -fpic $(CFLAGS) $(INCLUDES) -c -o $(@) $(SOURCES)$(@:%.o=%.cpp)
+
+%.o : sources/%.cpp
+	echo compiling $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 clean:
 	rm -f $(OBJECT) $(LIB)
