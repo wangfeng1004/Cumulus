@@ -32,7 +32,7 @@ void Task::waitHandle() {
 }
 
 void Task::waitHandleEx(bool wait) {
-	_handler.waitHandleEx(this, wait);
+	_handler.waitHandleEx(*this, wait);
 }
 
 } // namespace Cumulus

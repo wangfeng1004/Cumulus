@@ -31,12 +31,12 @@ public:
 	~TaskHandler();
 
 	void waitHandle(Task& task);
-	void waitHandleEx(Task * task, bool wait);  
+	void waitHandleEx(Task & task, bool wait=true);  
 
 protected:
 	void terminate();
 	void giveHandle();
-	void giveHandleEx(bool wakeup=false);
+	void giveHandleEx(bool wakeup=true);
 private:
 	virtual void requestHandle()=0;
 

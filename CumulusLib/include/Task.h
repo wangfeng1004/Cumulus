@@ -27,7 +27,7 @@ public:
 	Task(TaskHandler& handler);
 
 	virtual void	handle()=0;
-	void waitHandleEx(bool wait=false);
+	void waitHandleEx(bool wait=true);
 protected:
 	void waitHandle();
 private:

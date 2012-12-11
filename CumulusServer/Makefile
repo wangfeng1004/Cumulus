@@ -5,7 +5,7 @@ EXEC=CumulusServer
 INCLUDES=-I/usr/local/include/ -I./../CumulusLib/include/
 LIBDIR=-L/usr/local/lib/ -L./../CumulusLib/
 SOURCES=./sources/
-CFLAGS+=-D CUMULUS_LOGS
+CFLAGS+=-D CUMULUS_LOGS -g -O0 -MD
 LDFLAGS+="-Wl,-rpath,./../CumulusLib/,-rpath,/usr/local/lib/"
 LIBS ?= -lCumulus -lPocoFoundation -lPocoXML -lPocoUtil -lPocoNet -lcrypto -lssl -lluajit-5.1
 

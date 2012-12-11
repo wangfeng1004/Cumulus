@@ -48,7 +48,7 @@ public:
 	MainSockets():SocketManager((TaskHandler&)*this,"MainSockets") {}
 	virtual ~MainSockets(){}
 private:
-	void requestHandle(){giveHandle();}
+	void requestHandle(){giveHandleEx();}
 };
 
 
@@ -75,7 +75,7 @@ private:
 	void			requestHandle();
 	virtual void	handle(bool& terminate);
 
-	void			receive(RTMFPReceiving& rtmfpReceiving);
+	void			receive(RTMFPReceiving * rtmfpReceiving);
 	void			run();
 	Poco::UInt8		p2pHandshake(const std::string& tag,PacketWriter& response,const Poco::Net::SocketAddress& address,const Poco::UInt8* peerIdWanted);
 	Session&		createSession(const Peer& peer,Cookie& cookie);

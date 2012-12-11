@@ -46,13 +46,13 @@ void TaskHandler::waitHandle(Task& task) {
 	_event.wait();
 }
 
-void TaskHandler::waitHandleEx(Task * task, bool wait) {
+void TaskHandler::waitHandleEx(Task & task, bool wait) {
 	ScopedLock<FastMutex> lockWait(_mutexWait);
 	{
 		ScopedLock<FastMutex> lock(_mutex);
 		if (_stop)
 			return;
-		_queue.push(task);
+		_queue.push(dynamic_cast<Task *>(&task));
 	}
 	requestHandle();
 	if (wait) _event.wait();

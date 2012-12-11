@@ -40,7 +40,7 @@ void PoolThread::push(AutoPtr<WorkThread>& pWork) {
 	++_queue;
 	ScopedLock<FastMutex> lock(_mutex);
 	_jobs.push_back(pWork);
-	start();
+	//start(); 
 	wakeUp();
 }
 

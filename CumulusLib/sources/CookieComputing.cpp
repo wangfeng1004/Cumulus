@@ -53,7 +53,9 @@ void CookieComputing::run() {
 
 	// Compute Keys
 	RTMFP::ComputeAsymetricKeys(sharedSecret,&initiatorNonce[0],initiatorNonce.size(),&nonce[0],nonce.size(),decryptKey,encryptKey);
-	waitHandle();
+
+	duplicate();
+	waitHandleEx(false);
 }
 
 void CookieComputing::handle() {
@@ -62,6 +64,7 @@ void CookieComputing::handle() {
 		duplicate();
 		pSession->peer.pinObject<CookieComputing>(*this);
 	}
+	release();
 }
 
 

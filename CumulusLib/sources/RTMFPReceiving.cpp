@@ -53,11 +53,13 @@ void RTMFPReceiving::run() {
 		ERROR("Decrypt error on session %u",id);
 		return;
 	}
-	waitHandle();
+	duplicate();
+	waitHandleEx(false);
 }
 
 void RTMFPReceiving::handle() {
-	_server.receive(*this);
+	_server.receive(this);
+	release();
 }
 
 

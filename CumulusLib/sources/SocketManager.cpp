@@ -170,7 +170,7 @@ void SocketManager::run() {
 			WARN("Socket error, %s",ex.displayText().c_str())
 		}
 		
-		waitHandle();
+		waitHandleEx();
 	}
 
 	

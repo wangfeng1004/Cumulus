@@ -44,7 +44,7 @@ public:
 	void run() {
 		setPriority(Thread::PRIO_LOW);
 		do {
-			waitHandle();
+			waitHandleEx();
 		} while(sleep(2000)!=STOP);
 	}
 private:
@@ -187,19 +187,20 @@ void RTMFPServer::onReadable(Socket& socket) {
 
 void RTMFPServer::handle(bool& terminate){
 	if(sleep()!=STOP)
-		giveHandle();
+		giveHandleEx();
 	else
 		terminate = true;
 }
 
-void RTMFPServer::receive(RTMFPReceiving& rtmfpReceiving) {
+void RTMFPServer::receive(RTMFPReceiving * rtmfpReceiving) {
 	// Process packet
+	if (!rtmfpReceiving) return;
 	Session* pSession = NULL;
-	if(rtmfpReceiving.id==0) {
+	if(rtmfpReceiving->id==0) {
 		DEBUG("Handshaking");
 		pSession = &_handshake;
 	} else
-		pSession = _sessions.find(rtmfpReceiving.id);
+		pSession = _sessions.find(rtmfpReceiving->id);
 	if(!pSession)
 		return; // No warn because can have been deleted during decoding threading process
 	if(!pSession->checked) {
@@ -209,9 +210,9 @@ void RTMFPServer::receive(RTMFPReceiving& rtmfpReceiving) {
 		pCookieComputing->release();
 	}
 	SocketAddress oldAddress = pSession->peer.address;
-	if(pSession->setEndPoint(rtmfpReceiving.socket,rtmfpReceiving.address))
+	if(pSession->setEndPoint(rtmfpReceiving->socket,rtmfpReceiving->address))
 		_sessions.changeAddress(oldAddress,*pSession);
-	pSession->receive(*rtmfpReceiving.pPacket);
+	pSession->receive(*rtmfpReceiving->pPacket);
 }
 
 UInt8 RTMFPServer::p2pHandshake(const string& tag,PacketWriter& response,const SocketAddress& address,const UInt8* peerIdWanted) {

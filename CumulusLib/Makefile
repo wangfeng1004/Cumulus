@@ -10,7 +10,7 @@ else
 	SHARED=  #-shared
 endif
 SOURCES=./sources/
-CFLAGS+=-D CUMULUS_LOGS
+CFLAGS+=-D CUMULUS_LOGS -g -O0 -MD
 LIBS ?= -L/usr/local/lib/ -lPocoFoundation -lPocoXML -lPocoUtil -lPocoNet -lcrypto -lssl
 INCLUDES = -I/usr/local/include/ -I./include/
 OBJECT = $(OBJECTS:%=%.o)
