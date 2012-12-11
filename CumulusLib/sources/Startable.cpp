@@ -50,17 +50,11 @@ void Startable::start() {
 		_haveToJoin=false;
 	}
 	try {
-		{
-			ScopedLock<FastMutex> lock(_mutexStop);
-			_stop=false;
-		}
+		ScopedLock<FastMutex> lock(_mutexStop);
 		_thread.start(_process);
 		_haveToJoin = true;
+		_stop=false;
 	} catch (Poco::Exception& ex) {
-		{
-			ScopedLock<FastMutex> lock(_mutexStop);
-			_stop=true;
-		}
 		ERROR("Impossible to start the thread : %s",ex.displayText().c_str());
 	}
 }
