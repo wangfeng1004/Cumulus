@@ -53,17 +53,20 @@ void PoolThread::run() {
 	for(;;) {
 
 		WakeUpType wakeUpType = sleep(40000); // 40 sec of timeout
+
+		if (wakeUpType == Startable::STOP)
+			return;
 		
 		for(;;) {
 			WorkThread* pWork;
 			{
 				ScopedLock<FastMutex> lock(_mutex);
-				if(_jobs.empty()) {
-					if(wakeUpType!=WAKEUP) { // STOP or TIMEOUT
-						if(wakeUpType==TIMEOUT)
-							stop();
-						return;
-					}
+				if(_jobs.empty()) { // WAKEUP or TIMEOUT
+					//if(wakeUpType!=WAKEUP) { // TIMEOUT
+					//	if(wakeUpType==TIMEOUT)
+					//		stop();
+					//	return;
+					//}
 					break;
 				}
 				pWork = _jobs.front();

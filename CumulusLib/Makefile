@@ -19,7 +19,7 @@ OBJECT = $(OBJECTS:%=%.o)
 all: $(OBJECT)
 	echo creating static lib $(LIB)
 	#$(CC) $(SHARED) $(OBJECT) -o $(LIB) $(LIBS)
-	ar -cru $(LIB) $(OBJECT) 
+	ar rcs $(LIB) $(OBJECT) 
 	ranlib $(LIB)
 
 #$(OBJECT): 

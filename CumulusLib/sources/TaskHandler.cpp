@@ -46,6 +46,18 @@ void TaskHandler::waitHandle(Task& task) {
 	_event.wait();
 }
 
+void TaskHandler::waitHandleEx(Task * task, bool wait) {
+	ScopedLock<FastMutex> lockWait(_mutexWait);
+	{
+		ScopedLock<FastMutex> lock(_mutex);
+		if (_stop)
+			return;
+		_queue.push(task);
+	}
+	requestHandle();
+	if (wait) _event.wait();
+}
+
 void TaskHandler::giveHandle() {
 	ScopedLock<FastMutex> lock(_mutex);
 	if(!_pTask)
@@ -55,5 +67,23 @@ void TaskHandler::giveHandle() {
 	_event.set();
 }
 
+void TaskHandler::giveHandleEx(bool wakeup) {
+retry:
+	{
+		{
+			ScopedLock<FastMutex> lock(_mutex);
+			if(_queue.empty())
+				goto out;
+												                         _pTask = _queue.front();
+			_queue.pop();
+		}
+
+		_pTask->handle();
+		goto retry;
+	}
+out:
+	_pTask = NULL;
+	if (wakeup) _event.set();
+}
 
 } // namespace Cumulus

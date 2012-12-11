@@ -32,6 +32,7 @@ public:
 	Poco::UInt32	threadsAvailable();
 
 	PoolThread*	enqueue(Poco::AutoPtr<WorkThread> pWork,PoolThread* pThread=NULL);
+	void launch();
 
 private:
 	std::vector<PoolThread*>	_threads;

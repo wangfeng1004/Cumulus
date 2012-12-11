@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <queue>
 #include "Cumulus.h"
 #include "Task.h"
 #include "Poco/Mutex.h"
@@ -30,10 +31,12 @@ public:
 	~TaskHandler();
 
 	void waitHandle(Task& task);
+	void waitHandleEx(Task * task, bool wait);  
 
 protected:
 	void terminate();
 	void giveHandle();
+	void giveHandleEx(bool wakeup=false);
 private:
 	virtual void requestHandle()=0;
 
@@ -42,6 +45,8 @@ private:
 	Task*					_pTask;
 	Poco::Event				_event;
 	bool					_stop;
+
+	std::queue<Task *> _queue;
 };
 
 

@@ -26,7 +26,7 @@
 
 namespace Cumulus {
 
-class PoolThread : private Startable {
+class PoolThread : public Startable { 
 public:
 	PoolThread();
 	virtual ~PoolThread();

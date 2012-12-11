@@ -41,6 +41,12 @@ void PoolThreads::clear() {
 		(*it)->clear();
 }
 
+void PoolThreads::launch() {
+	vector<PoolThread*>::iterator it;
+	for(it=_threads.begin();it!=_threads.end();++it) 
+		(*it)->start();
+}
+
 PoolThread* PoolThreads::enqueue(AutoPtr<WorkThread> pWork,PoolThread* pThread) {
 
 	UInt32 queue=0;
