@@ -39,6 +39,7 @@ bool TCPServer::start(UInt16 port) {
 	}
 	try {
 		_socket.bind(port);
+		_socket.setReuseAddress(true);
 		_socket.setLinger(false,0);
 		_socket.setBlocking(false);
 		_socket.listen();
