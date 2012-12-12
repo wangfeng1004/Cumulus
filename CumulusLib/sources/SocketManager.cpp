@@ -135,7 +135,7 @@ void SocketManager::handle() {
 
 void SocketManager::run() {
 
-	Timespan			timeout(50000);
+	Timespan			timeout(10000);
 	
 	while(running()) {
 
