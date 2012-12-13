@@ -24,14 +24,16 @@ namespace Cumulus {
 class TaskHandler;
 class Task {
 public:
-	Task(TaskHandler& handler);
+	Task(TaskHandler * handler=NULL);
+	void associateHandler(TaskHandler * handler);
 
 	virtual void	handle()=0;
 	void waitHandleEx(bool wait=true);
+	TaskHandler * getTaskHandler();
 protected:
 	void waitHandle();
 private:
-	TaskHandler&	_handler;
+	TaskHandler *	_handler;
 };
 
 

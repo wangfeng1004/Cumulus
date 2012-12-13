@@ -23,16 +23,25 @@ using namespace std;
 namespace Cumulus {
 
 
-Task::Task(TaskHandler& handler) : _handler(handler)  {
+Task::Task(TaskHandler * handler) : _handler(handler)  {
 }
 
+void Task::associateHandler(TaskHandler * handler) {
+	_handler = handler;
+}
 
 void Task::waitHandle() {
-	_handler.waitHandle(*this);
+	if(_handler)
+		_handler->waitHandle(*this);
 }
 
 void Task::waitHandleEx(bool wait) {
-	_handler.waitHandleEx(*this, wait);
+	if(_handler)
+		_handler->waitHandleEx(*this, wait);
+}
+
+TaskHandler * Task::getTaskHandler() {
+	return _handler;
 }
 
 } // namespace Cumulus

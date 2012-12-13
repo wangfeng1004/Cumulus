@@ -19,7 +19,9 @@
 
 
 #include "SocketManager.h"
+#include "Task.h"
 #include "Poco/Net/StreamSocket.h"
+#include "Poco/Mutex.h"
 
 
 class TCPClient : private Cumulus::SocketHandler {
@@ -58,6 +60,7 @@ private:
 	std::vector<Poco::UInt8>	_sendBuffer;
 	bool						_connected;
 	Cumulus::SocketManager&		_manager;
+	Poco::Mutex	_mutex;
 };
 
 inline Poco::Net::SocketAddress	TCPClient::address() {
@@ -73,6 +76,7 @@ inline void TCPClient::onError(const Poco::Net::Socket& socket,const std::string
 }
 
 inline bool TCPClient::haveToWrite(const Poco::Net::Socket& socket) {
+	Poco::ScopedLock<Poco::Mutex> lock(_mutex);
 	return !_sendBuffer.empty();
 }
 

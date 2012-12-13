@@ -18,6 +18,7 @@
 #include "Middle.h"
 #include "Logs.h"
 #include "Util.h"
+#include "Handler.h"
 #include "AMFWriter.h"
 #include "AMFReader.h"
 #include "Poco/Format.h"
@@ -39,9 +40,8 @@ Middle::Middle(UInt32 id,
 				const UInt8* encryptKey,
 				Handler& handler,
 				const Sessions&	sessions,
-				Target& target) : ServerSession(id,farId,peer,decryptKey,encryptKey,(Invoker&)handler),_pMiddleAesDecrypt(NULL),_pMiddleAesEncrypt(NULL),_isPeer(target.isPeer),
-					_middleId(0),_sessions(sessions),_firstResponse(false),_queryUrl("rtmfp://"+target.address.toString()+peer.path),_middlePeer(peer),_target(target) {
-
+				Target& target) : ServerSession(id,farId,peer,decryptKey,encryptKey,(Invoker&)handler),_pMiddleAesDecrypt(NULL),_pMiddleAesEncrypt(NULL),_isPeer(target.isPeer),_middleId(0),_sessions(sessions),_firstResponse(false),_queryUrl("rtmfp://"+target.address.toString()+peer.path),_middlePeer(peer),_target(target) {
+					
 	Util::UnpackUrl(_queryUrl,(string&)_middlePeer.path,(map<string,string>&)_middlePeer.properties);
 
 	// connection to target
@@ -79,6 +79,7 @@ Middle::Middle(UInt32 id,
 	packet.clear(packet.position()+16);
 
 	sendHandshakeToTarget(0x30);
+
 }
 
 Middle::~Middle() {
@@ -490,6 +491,7 @@ void Middle::onReadable(Socket& socket) {
 		return;
 	}
 
+	ScopedLock<Mutex> lock(_mutex);
 	int len = _socket.receiveBytes(_buffer,sizeof(_buffer));
 
 	PacketReader packet(_buffer,len);

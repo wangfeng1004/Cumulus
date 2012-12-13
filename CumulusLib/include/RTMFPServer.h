@@ -92,7 +92,7 @@ private:
 	bool							_middle;
 	Target*							_pCirrus;
 	Sessions						_sessions;
-	MainSockets						_mainSockets;
+//	MainSockets						_mainSockets;
 };
 
 inline Poco::UInt16 RTMFPServer::port() {

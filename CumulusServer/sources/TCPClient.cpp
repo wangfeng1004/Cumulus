@@ -52,6 +52,7 @@ void TCPClient::onReadable(Socket& socket) {
 		return;
 	}
 
+	ScopedLock<Mutex> lock(_mutex);
 	UInt32 size = _recvBuffer.size();
 	_recvBuffer.resize(size+available);
 
@@ -60,6 +61,7 @@ void TCPClient::onReadable(Socket& socket) {
 		disconnect(); // Graceful disconnection
 		return;
 	}
+
 	available = size+received;
 
 	UInt32 rest = onReception(&_recvBuffer[0],available);
@@ -75,6 +77,7 @@ void TCPClient::onReadable(Socket& socket) {
 }
 
 void TCPClient::onWritable(Socket& socket) {
+	ScopedLock<Mutex> lock(_mutex);
 	if(_sendBuffer.size()==0)
 		return;
 	int sent = sendIntern(&_sendBuffer[0],_sendBuffer.size());
@@ -92,6 +95,7 @@ int TCPClient::sendIntern(const UInt8* data,UInt32 size) {
 }
 
 bool TCPClient::connect(const SocketAddress& address) {
+	ScopedLock<Mutex> lock(_mutex);
 	if(_connected)
 		disconnect();
 	_error.clear();
@@ -106,6 +110,8 @@ bool TCPClient::connect(const SocketAddress& address) {
 }
 
 void TCPClient::disconnect() {
+	ScopedLock<Mutex> lock(_mutex);
+
 	if(!_connected)
 		return;
 	_manager.remove(_socket);
@@ -118,6 +124,8 @@ void TCPClient::disconnect() {
 }
 
 bool TCPClient::send(const UInt8* data,UInt32 size) {
+	ScopedLock<Mutex> lock(_mutex);
+
 	if(!_connected) {
 		if(!error())
 			error("TCPClient not connected");

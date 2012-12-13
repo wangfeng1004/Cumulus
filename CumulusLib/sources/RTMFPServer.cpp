@@ -35,7 +35,7 @@ namespace Cumulus {
 
 class RTMFPManager : private Task, private Startable {
 public:
-	RTMFPManager(RTMFPServer& server):_server(server),Task(server),Startable("RTMFPManager")  {
+	RTMFPManager(RTMFPServer& server):_server(server),Task(&server),Startable("RTMFPManager")  {
 		start();
 	}
 	virtual ~RTMFPManager() {
@@ -106,6 +106,7 @@ void RTMFPServer::start(RTMFPServerParams& params) {
 	(UInt32&)keepAlivePeer = params.keepAlivePeer<5 ? 5000 : params.keepAlivePeer*1000;
 
 	poolThreads.launch();
+	sockets.launch();
 
 	Startable::start();
 	setPriority(params.threadPriority);
@@ -115,7 +116,7 @@ void RTMFPServer::run() {
 
 	try {
 		_socket.bind(SocketAddress("0.0.0.0",_port));
-		_mainSockets.add(_socket,*this);
+		sockets.add(_socket,*this);  //_mainSockets
 
 		NOTE("RTMFP server starts on %u port",_port);
 		onStart();
@@ -133,7 +134,7 @@ void RTMFPServer::run() {
 		FATAL("RTMFPServer, unknown error");
 	}
 
-	_mainSockets.remove(_socket);
+	sockets.remove(_socket); // _mainSockets
 
 	// terminate handle
 	terminate();
@@ -149,7 +150,7 @@ void RTMFPServer::run() {
 	_socket.close();
 
 	sockets.clear();
-	_mainSockets.clear();
+	//_mainSockets.clear();
 	_port=0;
 	onStop();
 

@@ -19,6 +19,7 @@
 
 #include "TCPServer.h"
 #include "Broadcaster.h"
+#include "Poco/Mutex.h"
 
 class Servers : private TCPServer, private ServersHandler, public Broadcaster {
 public:
@@ -51,5 +52,6 @@ private:
 };
 
 inline void Servers::clientHandler(Poco::Net::StreamSocket& socket){
+	Poco::ScopedLock<Poco::Mutex> lock(mutex());
 	_clients.insert(new ServerConnection(socket,manager,_handler,*this));
 }

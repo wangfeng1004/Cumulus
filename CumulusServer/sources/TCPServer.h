@@ -20,6 +20,7 @@
 
 #include "SocketManager.h"
 #include "Poco/Net/ServerSocket.h"
+#include "Poco/Mutex.h"
 
 
 class TCPServer : private Cumulus::SocketHandler {
@@ -31,6 +32,7 @@ public:
 	bool			running();
 	Poco::UInt16	port();
 	void			stop();
+	Poco::Mutex & mutex();
 
 protected:
 	Cumulus::SocketManager&	manager;
@@ -44,6 +46,8 @@ private:
 
 	Poco::Net::ServerSocket		_socket;
 	Poco::UInt16				_port;
+
+	Poco::Mutex _mutex;
 };
 
 inline bool	TCPServer::running() {
@@ -52,4 +56,8 @@ inline bool	TCPServer::running() {
 
 inline Poco::UInt16	TCPServer::port() {
 	return _port;
+}
+
+inline Poco::Mutex & TCPServer::mutex() {
+	return _mutex;
 }

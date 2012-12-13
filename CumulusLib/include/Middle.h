@@ -80,6 +80,8 @@ private:
 	bool						_firstResponse;
 
 	const Sessions&				_sessions;
+
+	Poco::Mutex			_mutex;
 };
 
 

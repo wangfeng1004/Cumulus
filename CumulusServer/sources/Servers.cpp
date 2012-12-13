@@ -39,12 +39,15 @@ Servers::Servers(UInt16 port,ServerHandler& handler,SocketManager& manager,const
 
 Servers::~Servers() {
 	stop();
+
+	ScopedLock<Mutex> lock(mutex());
 	Iterator it;
 	for(it=_targets.begin();it!=_targets.end();++it)
 		delete (*it);
 }
 
 void Servers::manage() {
+	ScopedLock<Mutex> lock(mutex());
 	if(_targets.empty() || (--_manageTimes)!=0)
 		return;
 	_manageTimes = 5; // every 10 sec
@@ -61,6 +64,8 @@ void Servers::start() {
 
 void Servers::stop() {
 	TCPServer::stop();
+
+	ScopedLock<Mutex> lock(mutex());
 	_connections.clear();
 	targets._connections.clear();
 	initiators._connections.clear();
@@ -71,6 +76,7 @@ void Servers::stop() {
 }
 
 void Servers::connection(ServerConnection& server) {
+	ScopedLock<Mutex> lock(mutex());
 	_connections.insert(&server);
 	if(server.isTarget)
 		targets._connections.insert(&server);
@@ -80,6 +86,7 @@ void Servers::connection(ServerConnection& server) {
 }
 
 bool Servers::disconnection(ServerConnection& server) {
+	ScopedLock<Mutex> lock(mutex());
 	_connections.erase(&server);
 	_clients.erase(&server);
 	if(server.isTarget)

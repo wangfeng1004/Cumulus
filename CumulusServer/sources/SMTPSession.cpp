@@ -40,7 +40,7 @@ public:
 };
 
 
-SMTPSession::SMTPSession(TaskHandler& handler,const string& host,UInt16 port,UInt16 timeout) : _SMTPClient(_socket),Startable("SMTPSession"),Task(handler),_host(host),_port(port),_timeout(timeout*1000) {
+SMTPSession::SMTPSession(TaskHandler& handler,const string& host,UInt16 port,UInt16 timeout) : _SMTPClient(_socket),Startable("SMTPSession"),Task(&handler),_host(host),_port(port),_timeout(timeout*1000) {
 	
 }
 

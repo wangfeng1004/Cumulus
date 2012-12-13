@@ -17,6 +17,7 @@
 
 #include "SocketManager.h"
 #include "Logs.h"
+#include "Poco/SharedPtr.h"
 
 using namespace std;
 using namespace Poco;
@@ -41,7 +42,7 @@ public:
 };
 
 
-class SocketManaged : public Socket {
+class SocketManaged : public Socket, public ReferenceCounter {
 public:
 	SocketManaged(const Socket& socket,SocketHandler& handler):Socket(socket),socketSelectable(new SocketManagedImpl(socket.impl()->sockfd(),*this)),handler(handler) {}
 	SocketHandler&				handler;
@@ -50,7 +51,7 @@ public:
 
 
 
-SocketManager::SocketManager(TaskHandler& handler,const string& name) : Startable(name),Task(handler) {
+SocketManager::SocketManager(TaskHandler& handler,const string& name) : Startable(name),Task(&handler) {
 
 }
 
@@ -64,12 +65,21 @@ void SocketManager::clear() {
 		ScopedLock<Mutex> lock(_mutex);
 		map<const Socket*,SocketManaged*>::iterator it;
 		for(it=_sockets.begin();it!= _sockets.end();++it) {
-			((SocketManagedImpl*)it->second->socketSelectable.impl())->pSocketManaged = NULL;
-			delete it->second;
+			SocketManaged * managed = it->second;
+			((SocketManagedImpl*)(managed->socketSelectable.impl()))->pSocketManaged = NULL;
+			managed->release();
 		}
 		_sockets.clear();
 	}
 	stop();
+}
+
+void SocketManager::launch() {
+	start();
+}
+
+TaskHandler * SocketManager::getTaskHandler() {
+	return getTaskHandler();
 }
 
 void SocketManager::add(const Socket& socket,SocketHandler& handler) {
@@ -80,8 +90,8 @@ void SocketManager::add(const Socket& socket,SocketHandler& handler) {
 	if(it!=_sockets.begin())
 		--it;
 	_sockets.insert(it,pair<const Socket*,SocketManaged*>(&socket,new SocketManaged(socket,handler)));
-	if(!running())
-		start();
+//	if(!running())
+//		start();
 }
 
 void SocketManager::remove(const Socket& socket) {
@@ -89,8 +99,9 @@ void SocketManager::remove(const Socket& socket) {
 	map<const Socket*,SocketManaged*>::iterator it = _sockets.find(&socket);
 	if(it == _sockets.end())
 		return;
-	((SocketManagedImpl*)it->second->socketSelectable.impl())->pSocketManaged = NULL;
-	delete it->second;
+	SocketManaged * managed = it->second;  
+	((SocketManagedImpl *)(managed->socketSelectable.impl()))->pSocketManaged = NULL;
+	managed->release();
 	_sockets.erase(it);
 }
 
@@ -98,7 +109,7 @@ void SocketManager::handle() {
 	Socket::SocketList::iterator it;
 	SocketManaged*		pSocketManaged;
 	for (it = _readables.begin(); it != _readables.end(); ++it) {
-		ScopedLock<Mutex> lock(_mutex);
+		//ScopedLock<Mutex> lock(_mutex);
 		pSocketManaged = ((SocketManagedImpl*)it->impl())->pSocketManaged;
 		if(pSocketManaged) {
 			try {
@@ -106,10 +117,11 @@ void SocketManager::handle() {
 			} catch(Exception& ex) {
 				pSocketManaged->handler.onError(*pSocketManaged,ex.displayText().c_str());
 			}
+			pSocketManaged->release();
 		}
 	}
 	for (it = _writables.begin(); it != _writables.end(); ++it) {
-		ScopedLock<Mutex> lock(_mutex);
+		//ScopedLock<Mutex> lock(_mutex);
 		pSocketManaged = ((SocketManagedImpl*)it->impl())->pSocketManaged;
 		if(pSocketManaged) {
 			try {
@@ -117,10 +129,11 @@ void SocketManager::handle() {
 			} catch(Exception& ex) {
 				pSocketManaged->handler.onError(*pSocketManaged,ex.displayText().c_str());
 			}
+			pSocketManaged->release();
 		}
-	}	
+	}
 	for (it = _errors.begin(); it != _errors.end(); ++it) {
-		ScopedLock<Mutex> lock(_mutex);
+		//ScopedLock<Mutex> lock(_mutex);
 		pSocketManaged = ((SocketManagedImpl*)it->impl())->pSocketManaged;
 		if(pSocketManaged) {
 			try {
@@ -128,6 +141,7 @@ void SocketManager::handle() {
 			} catch(Exception& ex) {
 				pSocketManaged->handler.onError(*pSocketManaged,ex.displayText().c_str());
 			}
+			pSocketManaged->release();
 		}
 	}
 }
@@ -152,9 +166,13 @@ void SocketManager::run() {
 				empty=false;
 				SocketManaged& socket = *it->second;
 				_readables[i] = socket.socketSelectable;
-				if(socket.handler.haveToWrite(socket))
+				socket.duplicate();
+				if(socket.handler.haveToWrite(socket)) {
 					_writables.push_back(socket.socketSelectable);
+					socket.duplicate();
+				}
 				_errors[i] = socket.socketSelectable;
+				socket.duplicate();
 				++i;
 			}
 		}
@@ -170,7 +188,7 @@ void SocketManager::run() {
 			WARN("Socket error, %s",ex.displayText().c_str())
 		}
 		
-		waitHandleEx();
+		handle(); //waitHandleEx();
 	}
 
 	

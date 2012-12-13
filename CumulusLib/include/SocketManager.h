@@ -26,7 +26,7 @@
 namespace Cumulus {
 
 class SocketManaged;
-class SocketManager : private Poco::Net::SocketImpl, private Task, private Startable {
+class SocketManager : private Poco::Net::SocketImpl, private Task, public Startable {
 public:
 	SocketManager(TaskHandler& handler,const std::string& name="SocketManager");
 	virtual ~SocketManager();
@@ -34,12 +34,14 @@ public:
 	void add(const Poco::Net::Socket& socket,SocketHandler& handler);
 	void remove(const Poco::Net::Socket& socket);
 	void clear();
+	void launch();
 
+	TaskHandler * getTaskHandler(); 
 private:
 	void					run();
 	void					handle();
 
-	Poco::Mutex											_mutex;
+	Poco::Mutex				_mutex;
 	std::map<const Poco::Net::Socket*,SocketManaged*>	_sockets;
 
 	Poco::Net::Socket::SocketList						_readables;
