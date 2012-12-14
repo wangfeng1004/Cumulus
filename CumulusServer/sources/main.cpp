@@ -19,6 +19,7 @@
 #include "Logs.h"
 #include "Server.h"
 #include "ApplicationKiller.h"
+#include "Util.h"
 #include "Poco/File.h"
 #include "Poco/FileStream.h"
 #include "Poco/DateTimeFormatter.h"
