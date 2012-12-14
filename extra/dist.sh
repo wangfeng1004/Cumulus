@@ -12,4 +12,5 @@ cp -a /usr/local/lib/libPocoUtil.so* cumulus/
 #cp -a /usr/local/lib64/libcrypto.so* cumulus/
 cp -a *.ini cumulus/
 cp -a monitor*.sh cumulus/
+cp -a *.lua cumulus/
 tar czvf cumulus-`date '+%Y%m%d%H'`.tar.gz cumulus/

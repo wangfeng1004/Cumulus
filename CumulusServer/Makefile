@@ -1,4 +1,5 @@
-OBJECTS = main FileWatcher LUABroadcaster LUAByteReader LUAByteWriter LUAClient LUAClients LUAFlowWriter LUAGroup LUAGroups LUAInvoker LUAListener LUAListeners LUAMail LUAMember LUAPublication LUAPublications LUAQualityOfService LUAServer LUAServers LUATCPClient LUATCPServer Script Server ServerConnection ServerMessage Servers Service SMTPSession TCPClient TCPServer
+OBJECTS = main FileWatcher LUABroadcaster LUAByteReader LUAByteWriter LUAClient LUAClients LUAFlowWriter LUAGroup LUAGroups LUAInvoker LUAListener LUAListeners LUAMail LUAMember LUAPublication LUAPublications LUAQualityOfService LUAServer LUAServers LUATCPClient LUATCPServer LUAUDPSocket Script Server ServerConnection ServerMessage Servers Service SMTPSession TCPClient TCPServer UDPSocket
+
 
 CC=g++
 EXEC=CumulusServer
@@ -7,7 +8,8 @@ LIBDIR=-L/usr/local/lib/ -L./../CumulusLib/
 SOURCES=./sources/
 CFLAGS+=-D CUMULUS_LOGS -g -O0 -MD
 LDFLAGS+="-Wl,-rpath,./../CumulusLib/,-rpath,/usr/local/lib/"
-LIBS ?= -lCumulus -lPocoFoundation -lPocoXML -lPocoUtil -lPocoNet -lcrypto -lssl -lluajit-5.1
+#LIBS ?= -lCumulus -lPocoFoundation -lPocoXML -lPocoUtil -lPocoNet -lcrypto -lssl -lluajit-5.1
+LIBS ?= -lCumulus /usr/local/lib/libPocoUtil.a /usr/local/lib/libPocoNet.a /usr/local/lib/libPocoXML.a /usr/local/lib/libPocoFoundation.a /usr/local/lib/libluajit-5.1.a /usr/local/lib/libcrypto.a /usr/local/lib/libssl.a -pthread -ldl -lm
 
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
