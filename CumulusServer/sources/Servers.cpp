@@ -82,7 +82,7 @@ void Servers::connection(ServerConnection& server) {
 		targets._connections.insert(&server);
 	else
 		initiators._connections.insert(&server);
-	NOTE("Connection etablished with %s server ",server.publicAddress.c_str())
+	NOTE("Connection established with %s server ",server.publicAddress.c_str())
 }
 
 bool Servers::disconnection(ServerConnection& server) {
