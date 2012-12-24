@@ -100,7 +100,7 @@ void RTMFPServer::start(RTMFPServerParams& params) {
 
 	 (UInt32&)udpBufferSize = params.udpBufferSize==0 ? _socket.getReceiveBufferSize() : params.udpBufferSize;
 	_socket.setReceiveBufferSize(udpBufferSize);_socket.setSendBufferSize(udpBufferSize);
-	DEBUG("Socket buffer receving/sending size = %u/%u",udpBufferSize,udpBufferSize);
+	NOTE("Socket buffer receiving/sending size = %u/%u", udpBufferSize, udpBufferSize);
 
 	(UInt32&)keepAliveServer = params.keepAliveServer<5 ? 5000 : params.keepAliveServer*1000;
 	(UInt32&)keepAlivePeer = params.keepAlivePeer<5 ? 5000 : params.keepAlivePeer*1000;
@@ -116,6 +116,13 @@ void RTMFPServer::run() {
 
 	try {
 		_socket.bind(SocketAddress("0.0.0.0",_port));
+		NOTE("RTMFP server sendbufsize %d recvbufsize %d recvtmo %d sendtmo %d", 
+				_socket.getSendBufferSize(),
+				_socket.getReceiveBufferSize(),
+				_socket.getReceiveTimeout().milliseconds(),
+				_socket.getSendTimeout().milliseconds()
+				);
+
 		sockets.add(_socket,*this);  //_mainSockets
 
 		NOTE("RTMFP server starts on %u port",_port);

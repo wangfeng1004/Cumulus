@@ -18,6 +18,7 @@
 #include "SocketManager.h"
 #include "Logs.h"
 #include "Poco/SharedPtr.h"
+#include "Poco/RefCountedObject.h"
 
 using namespace std;
 using namespace Poco;
@@ -42,7 +43,7 @@ public:
 };
 
 
-class SocketManaged : public Socket, public ReferenceCounter {
+class SocketManaged : public Socket, public RefCountedObject {
 public:
 	SocketManaged(const Socket& socket,SocketHandler& handler):Socket(socket),socketSelectable(new SocketManagedImpl(socket.impl()->sockfd(),*this)),handler(handler) {}
 	SocketHandler&				handler;
