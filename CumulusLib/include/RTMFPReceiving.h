@@ -28,7 +28,7 @@
 namespace Cumulus {
 
 class RTMFPServer;
-class RTMFPReceiving : public WorkThread, private Task {
+class RTMFPReceiving : public WorkThread, /* private */ public Task {
 public:
 	RTMFPReceiving(RTMFPServer& server,Poco::Net::DatagramSocket& socket);
 	~RTMFPReceiving();
@@ -38,6 +38,8 @@ public:
 	Poco::Net::SocketAddress	address;
 	Poco::Net::DatagramSocket	socket;
 	PacketReader*				pPacket;
+
+	const char * bufdata();
 
 private:
 	void						handle();

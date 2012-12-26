@@ -37,6 +37,7 @@ public:
 	void launch();
 
 	TaskHandler * getTaskHandler(); 
+	void status_string(std::string & s);
 private:
 	void					run();
 	void					handle();

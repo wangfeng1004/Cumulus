@@ -27,6 +27,13 @@ namespace Cumulus {
 
 RTMFPReceiving::RTMFPReceiving(RTMFPServer& server,Poco::Net::DatagramSocket& socket): Task(&server), _server(server),pPacket(NULL),id(0),socket(socket) {
 	int size = socket.receiveFrom(_buff,sizeof(_buff),address);
+	if(server.shellSocket() == socket) {
+		if (size >= 0) _buff[size] = '\0';
+		if (size >= 1 && (_buff[size - 1] == '\r' || _buff[size -1] == '\n')) 
+			_buff[size-1] = '\0'; 
+		return;
+	}
+
 	if(_server.isBanned(address.host())) {
 		INFO("Data rejected because client %s is banned",address.host().toString().c_str());
 		return;
@@ -62,6 +69,8 @@ void RTMFPReceiving::handle() {
 	release();
 }
 
-
+const char * RTMFPReceiving::bufdata() {
+	return (const char *)(&_buff[0]);
+}
 
 } // namespace Cumulus

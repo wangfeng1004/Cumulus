@@ -23,6 +23,10 @@
 #include "Util.h"
 #include "Logs.h"
 #include "Poco/Format.h"
+#include "Poco/DateTimeFormatter.h"
+#include "Poco/LocalDateTime.h"
+#include "Poco/NumberFormatter.h"
+#include "Poco/String.h"
 #include "string.h"
 
 
@@ -45,7 +49,7 @@ public:
 		setPriority(Thread::PRIO_LOW);
 		do {
 			waitHandleEx();
-		} while(sleep(2000)!=STOP);
+		} while(sleep(1000)!=STOP);
 	}
 private:
 	void handle() {
@@ -90,6 +94,8 @@ void RTMFPServer::start(RTMFPServerParams& params) {
 		ERROR("RTMFPServer port must have a positive value");
 		return;
 	}
+	_shellPort = params.shellPort;
+
 	if(params.pCirrus) {
 		_pCirrus = new Target(*params.pCirrus);
 		NOTE("RTMFPServer started in man-in-the-middle mode with server %s (unstable debug mode)",_pCirrus->address.toString().c_str());
@@ -115,6 +121,7 @@ void RTMFPServer::start(RTMFPServerParams& params) {
 void RTMFPServer::run() {
 
 	try {
+		_startDatetimeStr = DateTimeFormatter::format(LocalDateTime(), "%b %d %Y %H:%M:%S");
 		_socket.bind(SocketAddress("0.0.0.0",_port));
 		NOTE("RTMFP server sendbufsize %d recvbufsize %d recvtmo %d sendtmo %d", 
 				_socket.getSendBufferSize(),
@@ -124,8 +131,14 @@ void RTMFPServer::run() {
 				);
 
 		sockets.add(_socket,*this);  //_mainSockets
-
 		NOTE("RTMFP server starts on %u port",_port);
+
+		if(_shellPort > 0) { 
+			_shellSocket.bind(SocketAddress("0.0.0.0", _shellPort));
+			sockets.add(_shellSocket, *this);
+			NOTE("RTMFP server shell command portal on %u prot", _shellPort);
+		}
+
 		onStart();
 
 		RTMFPManager manager(*this);
@@ -156,6 +169,11 @@ void RTMFPServer::run() {
 	// close UDP socket
 	_socket.close();
 
+	// close shell command port 
+	if(_shellPort > 0) { 
+		_shellSocket.close();
+	}
+
 	sockets.clear();
 	//_mainSockets.clear();
 	_port=0;
@@ -177,8 +195,14 @@ void RTMFPServer::onError(const Poco::Net::Socket& socket,const std::string& err
 void RTMFPServer::onReadable(Socket& socket) {
 	// Running on the thread of manager socket
 	AutoPtr<RTMFPReceiving> pRTMFPReceiving(new RTMFPReceiving(*this,(DatagramSocket&)socket));
-	if(!pRTMFPReceiving->pPacket)
+	if(!pRTMFPReceiving->pPacket) {
+		if(socket == shellSocket()) {
+			pRTMFPReceiving->duplicate();
+			pRTMFPReceiving->waitHandleEx(false);
+			return;
+		}
 		return;
+	}
 
 	if(pRTMFPReceiving->id==0) {
 		_handshake.decode(pRTMFPReceiving);
@@ -200,9 +224,41 @@ void RTMFPServer::handle(bool& terminate){
 		terminate = true;
 }
 
+void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
+	if (!received) return;
+	std::string tmp;
+	std::string resp = "Cumulus server, build time: " __DATE__ " " __TIME__ ", start time: ";
+	resp += _startDatetimeStr;
+	resp += ", cur time: " + DateTimeFormatter::format(LocalDateTime(),"%b %d %Y %H:%M:%S");
+	resp += "\n";
+
+	//std::string req(received->bufdata());
+	if (std::strcmp(received->bufdata(), "status") == 0) {
+		resp += "sessions_n: " + Poco::NumberFormatter::format(_sessions.count()) 
+			+ " sessions_n_peak: " + Poco::NumberFormatter::format(_sessions.peakCount) 
+			+ " task_handle_qsize: " + Poco::NumberFormatter::format(qsize())
+			+ "\n";
+		poolThreads.status_string(tmp);
+		resp += tmp; 
+		sockets.status_string(tmp);
+		resp += tmp;
+	}
+	else if (std::strcmp(received->bufdata(), "help") == 0) {
+		resp += "Commands: help status\n";
+	}
+	else {
+		resp += "Please type in `help` for details.\n";
+	}
+
+	received->socket.sendTo(resp.c_str(), resp.length(), received->address, 0); 
+}
+
 void RTMFPServer::receive(RTMFPReceiving * rtmfpReceiving) {
 	// Process packet
 	if (!rtmfpReceiving) return;
+	if (rtmfpReceiving->socket == _shellSocket) {
+		return handleShellCommand(rtmfpReceiving);
+	}
 	Session* pSession = NULL;
 	if(rtmfpReceiving->id==0) {
 		DEBUG("Handshaking");
@@ -351,6 +407,8 @@ void RTMFPServer::manage() {
 	_sessions.manage();
 }
 
-
+const Poco::Net::DatagramSocket & RTMFPServer::shellSocket() {
+	return _shellSocket;
+} 
 
 } // namespace Cumulus

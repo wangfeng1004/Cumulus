@@ -24,7 +24,8 @@ using namespace Poco::Net;
 
 namespace Cumulus {
 
-Sessions::Sessions(Gateway& gateway):_nextId(1),_gateway(gateway),_oldCount(0) {
+Sessions::Sessions(Gateway& gateway):_nextId(1),_gateway(gateway),_oldCount(0), peakCount(0) {
+	_sss_scan_pos = _sessions.begin(); 
 }
 
 Sessions::~Sessions() {
@@ -61,6 +62,9 @@ Session* Sessions::add(Session* pSession) {
 	do {
 		++_nextId;
 	} while(_nextId==0 && find(_nextId));
+
+	if (peakCount < _sessions.size()) 
+		peakCount = _sessions.size();
 
 	return pSession;
 }
@@ -109,21 +113,32 @@ Session* Sessions::find(UInt32 id) {
 
 void Sessions::manage() {
 	ScopedLock<Mutex>	lock(mutex);
-	map<UInt32,Session*>::iterator it= _sessions.begin();
-	while(it!=_sessions.end()) {
-		it->second->manage();
-		if(it->second->died) {
-			remove(it++);
+	int i = _sessions.size(), j = i;
+	i = (i >= 8000) ? (i >> 2) : (i >> 1);
+	if (i < 2000) 
+		i = j;		
+//	map<UInt32,Session*>::iterator it=  _sessions.begin();
+	while( --i >=0 && _sss_scan_pos !=_sessions.end()) {
+		_sss_scan_pos->second->manage();
+		if(_sss_scan_pos->second->died) {
+			remove(_sss_scan_pos++);
 			continue;
 		}
-		++it;
+		++_sss_scan_pos;
 	}
+	if(_sss_scan_pos ==_sessions.end())
+		_sss_scan_pos = _sessions.begin();
+	
 	if(_sessions.size()!=_oldCount) {
 		INFO("%u clients",count());
 		_oldCount=_sessions.size();
 	}
 }
 
+Poco::UInt32 Sessions::count() {
+	ScopedLock<Mutex>	lock(mutex);
+	return _sessions.size();
+}
 
 
 

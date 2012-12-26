@@ -21,6 +21,7 @@
 #include "Session.h"
 #include "Gateway.h"
 #include "Entities.h"
+#include "Poco/Mutex.h"
 #include <cstddef>
 
 namespace Cumulus {
@@ -33,7 +34,7 @@ public:
 	Sessions(Gateway& gateway);
 	virtual ~Sessions();
 
-	Poco::UInt32	count() const;
+	Poco::UInt32	count();
 	Poco::UInt32	nextId() const;
 
 	Session* find(Poco::UInt32 id);
@@ -49,7 +50,10 @@ public:
 	void		manage();
 	void		clear();
 
+public:
 	Poco::Mutex	mutex;
+	Poco::UInt32 peakCount;
+
 private:
 	void    remove(std::map<Poco::UInt32,Session*>::iterator it);
 
@@ -65,6 +69,7 @@ private:
 	std::map<Poco::Net::SocketAddress,Session*,Compare>	_sessionsByAddress;
 	Gateway&						_gateway;
 	Poco::UInt32					_oldCount;
+	std::map<Poco::UInt32,Session*>::iterator  _sss_scan_pos;
 };
 
 
@@ -76,9 +81,11 @@ inline Sessions::Iterator Sessions::begin() const {
 	return _sessions.begin();
 }
 
+#if 0
 inline Poco::UInt32 Sessions::count() const {
 	return _sessions.size();
 }
+#endif
 
 inline Sessions::Iterator Sessions::end() const {
 	return _sessions.end();

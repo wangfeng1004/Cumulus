@@ -31,7 +31,7 @@ namespace Cumulus {
 
 class RTMFPServerParams {
 public:
-	RTMFPServerParams() : port(RTMFP_DEFAULT_PORT),udpBufferSize(0),threadPriority(Poco::Thread::PRIO_HIGH),pCirrus(NULL),middle(false),keepAlivePeer(10),keepAliveServer(15) {
+	RTMFPServerParams() : port(RTMFP_DEFAULT_PORT),udpBufferSize(0),threadPriority(Poco::Thread::PRIO_HIGH),pCirrus(NULL),middle(false),keepAlivePeer(10),keepAliveServer(15), shellPort(0) {	
 	}
 	Poco::UInt16				port;
 	Poco::UInt32				udpBufferSize;
@@ -41,6 +41,7 @@ public:
 
 	Poco::UInt16				keepAlivePeer;
 	Poco::UInt16				keepAliveServer;
+	Poco::UInt16 				shellPort;
 };
 
 class MainSockets : public SocketManager,private TaskHandler {
@@ -65,6 +66,8 @@ public:
 	Poco::UInt16 port();
 	bool running();
 
+	const Poco::Net::DatagramSocket & shellSocket();
+
 protected:
 	virtual void    manage();
 
@@ -84,10 +87,16 @@ private:
 	void			onReadable(Poco::Net::Socket& socket);
 	void			onError(const Poco::Net::Socket& socket,const std::string& error);
 
+	void handleShellCommand(RTMFPReceiving * received);
+
 	Handshake					_handshake;
 
 	Poco::UInt16				_port;
 	Poco::Net::DatagramSocket	_socket;
+
+	Poco::UInt16 _shellPort;
+	Poco::Net::DatagramSocket _shellSocket;
+	std::string _startDatetimeStr;
 
 	bool							_middle;
 	Target*							_pCirrus;

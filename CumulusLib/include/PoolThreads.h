@@ -20,6 +20,7 @@
 #include "Cumulus.h"
 #include "PoolThread.h"
 #include <vector>
+#include <string>
 
 namespace Cumulus {
 
@@ -32,7 +33,9 @@ public:
 	Poco::UInt32	threadsAvailable();
 
 	PoolThread*	enqueue(Poco::AutoPtr<WorkThread> pWork,PoolThread* pThread=NULL);
+
 	void launch();
+	void status_string(std::string &s);
 
 private:
 	std::vector<PoolThread*>	_threads;

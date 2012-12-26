@@ -33,6 +33,7 @@ public:
 	void waitHandle(Task& task);
 	void waitHandleEx(Task & task, bool wait=true);  
 
+	size_t qsize();
 protected:
 	void terminate();
 	void giveHandle();

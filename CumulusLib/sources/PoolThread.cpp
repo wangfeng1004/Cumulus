@@ -54,7 +54,7 @@ void PoolThread::run() {
 
 		WakeUpType wakeUpType = sleep(40000); // 40 sec of timeout
 
-		if (wakeUpType == Startable::STOP)
+		if (wakeUpType == Startable::STOP) 
 			return;
 		
 		for(;;) {

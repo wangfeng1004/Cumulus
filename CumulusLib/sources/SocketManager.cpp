@@ -19,6 +19,7 @@
 #include "Logs.h"
 #include "Poco/SharedPtr.h"
 #include "Poco/RefCountedObject.h"
+#include "Poco/NumberFormatter.h"
 
 using namespace std;
 using namespace Poco;
@@ -193,6 +194,18 @@ void SocketManager::run() {
 	}
 
 	
+}
+
+void SocketManager::status_string(std::string & s) {
+	size_t n = 0;
+	{
+		ScopedLock<Mutex> lock(_mutex);
+		n = _sockets.size();
+	}
+	s = "-------SocketManager-------\n"; 
+	s += "\tmapsz: " + Poco::NumberFormatter::format((int)n);
+	s += " run : " + Poco::NumberFormatter::format((int)running()); 
+	s += "\n";
 }
 
 
