@@ -236,7 +236,7 @@ void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
 	if (std::strcmp(received->bufdata(), "status") == 0) {
 		resp += "sessions_n: " + Poco::NumberFormatter::format(_sessions.count()) 
 			+ " sessions_n_peak: " + Poco::NumberFormatter::format(_sessions.peakCount) 
-			+ " task_handle_qsize: " + Poco::NumberFormatter::format(qsize())
+			+ " task_handle_peak_qsize: " + Poco::NumberFormatter::format(peak_qsize())
 			+ "\n";
 		poolThreads.status_string(tmp);
 		resp += tmp; 
@@ -244,7 +244,11 @@ void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
 		resp += tmp;
 	}
 	else if (std::strcmp(received->bufdata(), "help") == 0) {
-		resp += "Commands: help status\n";
+		resp += "Commands: help status quit\n";
+	}
+	else if (std::strcmp(received->bufdata(), "quit") == 0) {
+		//resp += "Good bye\n";	
+		resp = "";	
 	}
 	else {
 		resp += "Please type in `help` for details.\n";

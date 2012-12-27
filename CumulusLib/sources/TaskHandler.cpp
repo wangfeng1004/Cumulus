@@ -16,6 +16,7 @@
 */
 
 #include "TaskHandler.h"
+#include "Poco/AtomicCounter.h"
 
 using namespace std;
 using namespace Poco;
@@ -54,6 +55,10 @@ void TaskHandler::waitHandleEx(Task & task, bool wait) {
 			if (_stop)
 				return;
 			_queue.push(dynamic_cast<Task *>(&task));
+
+			size_t qsize = _queue.size();
+			if (qsize > _peak_qsize.value()) 
+			      _peak_qsize = qsize;	
 		}
 	}
 	requestHandle();
@@ -91,6 +96,10 @@ out:
 size_t TaskHandler::qsize() {
 	ScopedLock<FastMutex> lock(_mutex);
 	return _queue.size();
+}
+
+int TaskHandler::peak_qsize() {
+	return _peak_qsize.value();
 }
 
 } // namespace Cumulus
