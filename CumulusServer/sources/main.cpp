@@ -27,6 +27,7 @@
 #include "Poco/Util/ServerApplication.h"
 #if defined(POCO_OS_FAMILY_UNIX)
 #include <signal.h>
+#include <sys/resource.h>
 #endif
 
 #define LOG_SIZE 1000000
@@ -235,7 +236,18 @@ private:
 				server.start(_params);
 
 				// wait for CTRL-C or kill
+
 #if defined(POCO_OS_FAMILY_UNIX)
+				if (::geteuid() == 0) {
+					struct rlimit rlim;
+					if (0 != ::getrlimit(RLIMIT_CORE, &rlim)) {
+						NOTE("get 'maximum size of core file': %s failed, continue to run\n", ::strerror(errno));
+			                } else {
+		                                rlim.rlim_cur = rlim.rlim_max;
+						if (0 != ::setrlimit(RLIMIT_CORE, &rlim))  {
+							NOTE("set 'maximum size of core file': %s failed, continue to run\n", strerror(errno)); }
+					}
+				}
 				int sig;
 				sigwait(&sset, &sig);
 #else
