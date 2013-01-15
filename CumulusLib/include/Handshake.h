@@ -21,6 +21,7 @@
 #include "ServerSession.h"
 #include "Cookie.h"
 #include "Gateway.h"
+#include <cstring>
 
 namespace Cumulus {
 
@@ -54,7 +55,7 @@ private:
 
 	struct CompareCookies {
 	   bool operator()(const Poco::UInt8* a,const Poco::UInt8* b) const {
-		   return memcmp(a,b,COOKIE_SIZE)<0;
+		   return std::memcmp(a,b,COOKIE_SIZE)<0;
 	   }
 	};
 	

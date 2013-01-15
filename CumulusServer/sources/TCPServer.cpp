@@ -24,7 +24,7 @@ using namespace Poco;
 using namespace Poco::Net;
 
 
-TCPServer::TCPServer(SocketManager& manager) : _port(0),manager(manager) {
+TCPServer::TCPServer(SocketManager& manager) : _port(0),manager(manager),_pSocket(NULL) {
 }
 
 
@@ -37,31 +37,33 @@ bool TCPServer::start(UInt16 port) {
 		ERROR("TCPServer port have to be superior to 0");
 		return false;
 	}
+	stop();
 	try {
-		_socket.bind(port, true);
-		_socket.setLinger(false,0);
-		_socket.setBlocking(false);
-		_socket.listen();
-		manager.add(_socket,*this);
-		_port=port;
+		_pSocket = new ServerSocket();
+		_pSocket->bind(port, true);
+		_pSocket->setLinger(false,0);
+		_pSocket->setBlocking(false);
+		_pSocket->listen();
 	} catch(Exception& ex) {
 		ERROR("TCPServer starting error: %s",ex.displayText().c_str())
 		return false;
 	}
+	_port=port;
+	manager.add(*_pSocket,*this);
 	return true;
 }
 
 void TCPServer::stop() {
-	if(_port==0)
+	if(_port==0 || !_pSocket)
 		return;
-	manager.remove(_socket);
-	_socket.close();
-	_port=0;
+	manager.remove(*_pSocket);
+	delete _pSocket;
+	_pSocket = NULL;
 }
 
 void TCPServer::onReadable(Socket& socket) {
 	try {
-		StreamSocket ss = _socket.acceptConnection();
+		StreamSocket ss = _pSocket->acceptConnection();
 		// enabe nodelay per default: OSX really needs that
 		ss.setNoDelay(true);
 		clientHandler(ss);

@@ -27,7 +27,7 @@
 #include "Poco/LocalDateTime.h"
 #include "Poco/NumberFormatter.h"
 #include "Poco/String.h"
-#include "string.h"
+#include <cstring>
 
 
 using namespace std;
@@ -104,8 +104,13 @@ void RTMFPServer::start(RTMFPServerParams& params) {
 	if(_middle)
 		NOTE("RTMFPServer started in man-in-the-middle mode between peers (unstable debug mode)");
 
-	 (UInt32&)udpBufferSize = params.udpBufferSize==0 ? _socket.getReceiveBufferSize() : params.udpBufferSize;
-	_socket.setReceiveBufferSize(udpBufferSize);_socket.setSendBufferSize(udpBufferSize);
+	_pSocket = new DatagramSocket();
+	if (_pSocket == NULL) {
+		ERROR("RTMFPServer allocation of pSocket failed");
+	        return;	
+	}
+	 (UInt32&)udpBufferSize = params.udpBufferSize==0 ? _pSocket->getReceiveBufferSize() : params.udpBufferSize;
+	_pSocket->setReceiveBufferSize(udpBufferSize);_pSocket->setSendBufferSize(udpBufferSize);
 	NOTE("Socket buffer receiving/sending size = %u/%u", udpBufferSize, udpBufferSize);
 
 	(UInt32&)keepAliveServer = params.keepAliveServer<5 ? 5000 : params.keepAliveServer*1000;
@@ -122,15 +127,15 @@ void RTMFPServer::run() {
 
 	try {
 		_startDatetimeStr = DateTimeFormatter::format(LocalDateTime(), "%b %d %Y %H:%M:%S");
-		_socket.bind(SocketAddress("0.0.0.0",_port));
+		_pSocket->bind(SocketAddress("0.0.0.0",_port));
 		NOTE("RTMFP server sendbufsize %d recvbufsize %d recvtmo %d sendtmo %d", 
-				_socket.getSendBufferSize(),
-				_socket.getReceiveBufferSize(),
-				_socket.getReceiveTimeout().milliseconds(),
-				_socket.getSendTimeout().milliseconds()
+				_pSocket->getSendBufferSize(),
+				_pSocket->getReceiveBufferSize(),
+				_pSocket->getReceiveTimeout().milliseconds(),
+				_pSocket->getSendTimeout().milliseconds()
 				);
 
-		sockets.add(_socket,*this);  //_mainSockets
+		sockets.add(*_pSocket,*this);  //_mainSockets
 		NOTE("RTMFP server starts on %u port",_port);
 
 		if(_shellPort > 0) { 
@@ -154,7 +159,7 @@ void RTMFPServer::run() {
 		FATAL("RTMFPServer, unknown error");
 	}
 
-	sockets.remove(_socket); // _mainSockets
+	sockets.remove(*_pSocket); // _mainSockets
 
 	// terminate handle
 	terminate();
@@ -167,7 +172,7 @@ void RTMFPServer::run() {
 	poolThreads.clear();
 
 	// close UDP socket
-	_socket.close();
+	_pSocket->close();
 
 	// close shell command port 
 	if(_shellPort > 0) { 
@@ -182,6 +187,11 @@ void RTMFPServer::run() {
 	if(_pCirrus) {
 		delete _pCirrus;
 		_pCirrus = NULL;
+	}
+
+	if(_pSocket) {
+		delete _pSocket;
+		_pSocket = NULL;
 	}
 	
 	NOTE("RTMFP server stops");

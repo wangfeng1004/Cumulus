@@ -25,7 +25,7 @@
 #include "Poco/RandomStream.h"
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include "string.h"
+#include <cstring>
 
 using namespace std;
 using namespace Poco;
@@ -487,7 +487,7 @@ void Middle::manage() {
 void Middle::onReadable(Socket& socket) {
 	if(died) {
 		invoker.sockets.remove(_socket);
-		_socket.close();
+		//_socket.close();
 		return;
 	}
 

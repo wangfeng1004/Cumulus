@@ -92,7 +92,7 @@ private:
 	Handshake					_handshake;
 
 	Poco::UInt16				_port;
-	Poco::Net::DatagramSocket	_socket;
+	Poco::Net::DatagramSocket	* _pSocket;
 
 	Poco::UInt16 _shellPort;
 	Poco::Net::DatagramSocket _shellSocket;
