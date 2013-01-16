@@ -41,10 +41,11 @@ private:
 	Poco::Timestamp _time;
 };
 
+class RTMFPServer;
 class ServerSession : public BandWriter,public Session {
 public:
 
-	ServerSession(Poco::UInt32 id,
+	ServerSession(RTMFPServer & server, Poco::UInt32 id,
 			Poco::UInt32 farId,
 			const Peer& peer,
 			const Poco::UInt8* decryptKey,

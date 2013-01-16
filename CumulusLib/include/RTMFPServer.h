@@ -71,6 +71,10 @@ public:
 protected:
 	virtual void    manage();
 
+public:
+	Poco::Int64 rcvpTm, rcvpCnt, psndTm, psndCnt;
+	Poco::Int64 peakRcvp, peakPsnd;
+
 private:
 	RTMFPServer(const std::string& name,Poco::UInt32 cores);
 	virtual void    onStart(){}
@@ -102,6 +106,7 @@ private:
 	Target*							_pCirrus;
 	Sessions						_sessions;
 //	MainSockets						_mainSockets;
+	int  tm_5m;	
 };
 
 inline Poco::UInt16 RTMFPServer::port() {

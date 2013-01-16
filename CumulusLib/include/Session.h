@@ -30,10 +30,11 @@
 
 namespace Cumulus {
 
+class RTMFPServer;
 class Session {
 public:
 
-	Session(Poco::UInt32 id,
+	Session(RTMFPServer & server, Poco::UInt32 id,
 			Poco::UInt32 farId,
 			const Peer& peer,
 			const Poco::UInt8* decryptKey,
@@ -80,6 +81,8 @@ private:
 
 
 	Poco::Net::DatagramSocket	_socket;
+
+	RTMFPServer & _server;
 };
 
 inline AESEngine::Type Session::prevAESType() {

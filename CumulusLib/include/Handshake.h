@@ -35,9 +35,10 @@ public:
 	Target*		pTarget;
 };
 
+class RTMFPServer;
 class Handshake : public ServerSession {
 public:
-	Handshake(Gateway& gateway,Handler& handler,Entity& entity);
+	Handshake(RTMFPServer & server, Gateway& gateway,Handler& handler,Entity& entity);
 	~Handshake();
 
 	void		createCookie(PacketWriter& writer,HelloAttempt& attempt,const std::string& tag,const std::string& queryUrl);

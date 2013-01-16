@@ -1,7 +1,7 @@
 OBJECTS = main FileWatcher LUABroadcaster LUAByteReader LUAByteWriter LUAClient LUAClients LUAFlowWriter LUAGroup LUAGroups LUAInvoker LUAListener LUAListeners LUAMail LUAMember LUAPublication LUAPublications LUAQualityOfService LUAServer LUAServers LUATCPClient LUATCPServer LUAUDPSocket Script Server ServerConnection ServerMessage Servers Service SMTPSession TCPClient TCPServer UDPSocket
 
 
-CC=g++
+CC=g++4
 EXEC=CumulusServer
 INCLUDES=-I/usr/local/include/ -I./../CumulusLib/include/
 LIBDIR=-L/usr/local/lib/ -L./../CumulusLib/

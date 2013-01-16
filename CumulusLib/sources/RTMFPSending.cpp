@@ -18,6 +18,7 @@
 #include "RTMFPSending.h"
 #include "RTMFP.h"
 #include "Logs.h"
+#include "RTMFPServer.h"
 
 using namespace std;
 using namespace Poco;
@@ -25,7 +26,7 @@ using namespace Poco::Net;
 
 namespace Cumulus {
 
-RTMFPSending::RTMFPSending(): packet(_buffer,sizeof(_buffer)),id(0),farId(0),pSocket(NULL) {
+RTMFPSending::RTMFPSending(RTMFPServer & server): _server(server), packet(_buffer,sizeof(_buffer)),id(0),farId(0),pSocket(NULL) {
 	packet.clear(6);
 	packet.limit(RTMFP_MAX_PACKET_LENGTH); // set normal limit
 }
@@ -52,6 +53,14 @@ void RTMFPSending::run() {
 	} catch(...) {
 		 WARN("Socket sending unknown error on session %u",id);
 	}
+
+#if (__GNUC__ >= 4)  && (defined(__x86_64__) || defined(__i386__))
+	Poco::Timestamp tv1;
+	Poco::Timestamp::TimeDiff delta = tv1 - tv0;
+	Poco::Int64 tmp =  __sync_add_and_fetch(&_server.psndTm, delta) / __sync_add_and_fetch(&_server.psndCnt, 1);
+	if (__sync_fetch_and_add(&_server.peakPsnd, 0) < tmp)
+		_server.peakPsnd = tmp;
+#endif
 }
 
 

@@ -25,9 +25,10 @@
 
 namespace Cumulus {
 
+class RTMFPServer;
 class RTMFPSending : public WorkThread {
 public:
-	RTMFPSending();
+	RTMFPSending(RTMFPServer & server);
 	~RTMFPSending();
 
 	Poco::UInt32				id;
@@ -41,6 +42,7 @@ private:
 	void						run();
 
 	Poco::UInt8					_buffer[PACKETSEND_SIZE];
+	RTMFPServer & _server;
 };
 
 } // namespace Cumulus

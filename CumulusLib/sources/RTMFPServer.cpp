@@ -59,7 +59,7 @@ private:
 };
 
 
-RTMFPServer::RTMFPServer(UInt32 threads) : Startable("RTMFPServer"),_pCirrus(NULL),_handshake(*this,*this,*this),_sessions(*this),Handler(threads) {
+RTMFPServer::RTMFPServer(UInt32 threads) : Startable("RTMFPServer"),_pCirrus(NULL),_handshake(*this, *this,*this,*this),_sessions(*this),Handler(threads), tm_5m(300), peakRcvp(0), peakPsnd(0) {
 #ifndef POCO_OS_FAMILY_WINDOWS
 //	static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 //	RAND_seed(rnd_seed, sizeof(rnd_seed));
@@ -67,7 +67,7 @@ RTMFPServer::RTMFPServer(UInt32 threads) : Startable("RTMFPServer"),_pCirrus(NUL
 	DEBUG("Id of this RTMFP server : %s",Util::FormatHex(id,ID_SIZE).c_str());
 }
 
-RTMFPServer::RTMFPServer(const string& name,UInt32 threads) : Startable(name),_pCirrus(NULL),_handshake(*this,*this,*this),_sessions(*this),Handler(threads) {
+RTMFPServer::RTMFPServer(const string& name,UInt32 threads) : Startable(name),_pCirrus(NULL),_handshake(*this, *this,*this,*this),_sessions(*this),Handler(threads), tm_5m(300), peakRcvp(0), peakPsnd(0) {
 #ifndef POCO_OS_FAMILY_WINDOWS
 //	static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 //	RAND_seed(rnd_seed, sizeof(rnd_seed));
@@ -246,7 +246,11 @@ void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
 	if (std::strcmp(received->bufdata(), "status") == 0) {
 		resp += "sessions_n: " + Poco::NumberFormatter::format(_sessions.count()) 
 			+ " sessions_n_peak: " + Poco::NumberFormatter::format(_sessions.peakCount) 
-			+ " task_handle_peak_qsize: " + Poco::NumberFormatter::format(peak_qsize())
+			+ " task_handle_peak_qsize: " + Poco::NumberFormatter::format(peak_qsize()) + "\n"
+			+ "rcvp: " + Poco::NumberFormatter::format(rcvpCnt > 0 ? (rcvpTm / rcvpCnt) : 0)  
+			+ " peak_rcvp: " + Poco::NumberFormatter::format(peakRcvp)
+			+ " psnd: " + Poco::NumberFormatter::format(psndCnt > 0 ? (psndTm / psndCnt) : 0)
+			+ " peak_psnd: " + Poco::NumberFormatter::format(peakPsnd)
 			+ "\n";
 		poolThreads.status_string(tmp);
 		resp += tmp; 
@@ -394,13 +398,13 @@ Session& RTMFPServer::createSession(const Peer& peer,Cookie& cookie) {
 
 	ServerSession* pSession;
 	if(pTarget) {
-		pSession = new Middle(_sessions.nextId(),cookie.farId,peer,cookie.decryptKey(),cookie.encryptKey(),*this,_sessions,*pTarget);
+		pSession = new Middle(*this, _sessions.nextId(),cookie.farId,peer,cookie.decryptKey(),cookie.encryptKey(),*this,_sessions,*pTarget);
 		if(_pCirrus==pTarget)
 			pSession->pTarget = cookie.pTarget;
 		DEBUG("Wait cirrus handshaking");
 		pSession->manage(); // to wait the cirrus handshake
 	} else {
-		pSession = new ServerSession(_sessions.nextId(),cookie.farId,peer,cookie.decryptKey(),cookie.encryptKey(),*this);
+		pSession = new ServerSession(*this, _sessions.nextId(),cookie.farId,peer,cookie.decryptKey(),cookie.encryptKey(),*this);
 		pSession->pTarget = cookie.pTarget;
 	}
 
@@ -419,6 +423,15 @@ void RTMFPServer::destroySession(Session& session) {
 void RTMFPServer::manage() {
 	_handshake.manage();
 	_sessions.manage();
+
+	--tm_5m;
+	if(tm_5m <= 0) {
+		tm_5m = 300;
+		rcvpCnt = 0;	
+		rcvpTm = 0;
+		psndCnt = 0;
+		psndTm = 0;
+	}
 }
 
 const Poco::Net::DatagramSocket & RTMFPServer::shellSocket() {

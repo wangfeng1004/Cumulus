@@ -26,10 +26,11 @@
 
 namespace Cumulus {
 
-
+class RTMFPServer;
 class Middle : public ServerSession, public SocketHandler {
 public:
-	Middle(Poco::UInt32 id,
+	Middle(RTMFPServer & server,
+			Poco::UInt32 id,
 			Poco::UInt32 farId,
 			const Peer& peer,
 			const Poco::UInt8* decryptKey,
