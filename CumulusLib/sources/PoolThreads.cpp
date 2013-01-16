@@ -76,7 +76,7 @@ void PoolThreads::status_string(std::string &s) {
 	for(i = 0; i < _threads.size(); ++i) {
 		s += "\tthr[" + Poco::NumberFormatter::format(i) 
 			+ "] qsize: " +  Poco::NumberFormatter::format(_threads[i]->queue()) 
-			+ " run : " + Poco::NumberFormatter::format(_threads[i]->running()) 
+			+ " run: " + Poco::NumberFormatter::format(_threads[i]->running()) 
 			+ "\n";
 	}
 }

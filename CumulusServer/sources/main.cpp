@@ -279,5 +279,6 @@ private:
 
 int main(int argc, char* argv[]) {
 	DetectMemoryLeak();
-	return CumulusServer().run(argc, argv);
+	CumulusServer app;
+	return app.run(argc, argv);
 }

@@ -234,6 +234,21 @@ void RTMFPServer::handle(bool& terminate){
 		terminate = true;
 }
 
+void RTMFPServer::status_string(std::string & s) {
+	s = "-------RTMFPServer-------\n"; 
+	s += "\tpeak_qsize: " + Poco::NumberFormatter::format(peak_qsize());
+	s += " run: " + Poco::NumberFormatter::format(running())
+	     + "\n"; 
+	s += "\tsessions_n: " + Poco::NumberFormatter::format(_sessions.count()) 
+	     + " sessions_n_peak: " + Poco::NumberFormatter::format(_sessions.peakCount) 
+	     + "\n";
+	s += "\trcvp: " + Poco::NumberFormatter::format(rcvpCnt > 0 ? (rcvpTm / rcvpCnt) : 0)  
+			+ " peak_rcvp: " + Poco::NumberFormatter::format(peakRcvp)
+			+ " psnd: " + Poco::NumberFormatter::format(psndCnt > 0 ? (psndTm / psndCnt) : 0)
+			+ " peak_psnd: " + Poco::NumberFormatter::format(peakPsnd)
+			+ "\n";
+}
+
 void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
 	if (!received) return;
 	std::string tmp;
@@ -244,6 +259,7 @@ void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
 
 	//std::string req(received->bufdata());
 	if (std::strcmp(received->bufdata(), "status") == 0) {
+#if 0
 		resp += "sessions_n: " + Poco::NumberFormatter::format(_sessions.count()) 
 			+ " sessions_n_peak: " + Poco::NumberFormatter::format(_sessions.peakCount) 
 			+ " task_handle_peak_qsize: " + Poco::NumberFormatter::format(peak_qsize()) + "\n"
@@ -252,9 +268,12 @@ void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
 			+ " psnd: " + Poco::NumberFormatter::format(psndCnt > 0 ? (psndTm / psndCnt) : 0)
 			+ " peak_psnd: " + Poco::NumberFormatter::format(peakPsnd)
 			+ "\n";
+#endif
 		poolThreads.status_string(tmp);
 		resp += tmp; 
 		sockets.status_string(tmp);
+		resp += tmp;
+		status_string(tmp);
 		resp += tmp;
 	}
 	else if (std::strcmp(received->bufdata(), "help") == 0) {

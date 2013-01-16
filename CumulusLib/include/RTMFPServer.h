@@ -68,6 +68,8 @@ public:
 
 	const Poco::Net::DatagramSocket & shellSocket();
 
+	void status_string(std::string & s); 
+
 protected:
 	virtual void    manage();
 
