@@ -66,7 +66,6 @@ void RTMFPReceiving::run() {
 
 void RTMFPReceiving::handle() {
 	_server.receive(this);
-	release();
 
 	Poco::Timestamp tv1;
 	Poco::Timestamp::TimeDiff delta = tv1 - tv0;
@@ -78,6 +77,8 @@ void RTMFPReceiving::handle() {
 		if(_server.peakRcvp < tmp)
 			_server.peakRcvp = tmp;
 	}
+
+	release();
 }
 
 const char * RTMFPReceiving::bufdata() {
