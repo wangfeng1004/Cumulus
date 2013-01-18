@@ -21,6 +21,7 @@
 #include "ServerSession.h"
 #include "Cookie.h"
 #include "Gateway.h"
+#include <cstring>
 
 namespace Cumulus {
 
@@ -34,9 +35,10 @@ public:
 	Target*		pTarget;
 };
 
+class RTMFPServer;
 class Handshake : public ServerSession {
 public:
-	Handshake(Gateway& gateway,Handler& handler,Entity& entity);
+	Handshake(RTMFPServer & server, Gateway& gateway,Handler& handler,Entity& entity);
 	~Handshake();
 
 	void		createCookie(PacketWriter& writer,HelloAttempt& attempt,const std::string& tag,const std::string& queryUrl);
@@ -54,7 +56,7 @@ private:
 
 	struct CompareCookies {
 	   bool operator()(const Poco::UInt8* a,const Poco::UInt8* b) const {
-		   return memcmp(a,b,COOKIE_SIZE)<0;
+		   return std::memcmp(a,b,COOKIE_SIZE)<0;
 	   }
 	};
 	

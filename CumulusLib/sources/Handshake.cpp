@@ -20,7 +20,7 @@
 #include "Util.h"
 #include "Poco/RandomStream.h"
 #include "Poco/Format.h"
-#include "string.h"
+#include <cstring>
 
 using namespace std;
 using namespace Poco;
@@ -28,7 +28,7 @@ using namespace Poco::Net;
 
 namespace Cumulus {
 
-Handshake::Handshake(Gateway& gateway,Handler& handler,Entity& entity) : ServerSession(0,0,Peer(handler),RTMFP_SYMETRIC_KEY,RTMFP_SYMETRIC_KEY,(Invoker&)handler),
+Handshake::Handshake(RTMFPServer & server, Gateway& gateway,Handler& handler,Entity& entity) : ServerSession(server, 0,0,Peer(handler),RTMFP_SYMETRIC_KEY,RTMFP_SYMETRIC_KEY,(Invoker&)handler),
 	_gateway(gateway) {
 	(bool&)checked=true;
 

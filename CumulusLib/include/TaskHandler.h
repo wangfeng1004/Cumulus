@@ -22,6 +22,7 @@
 #include "Task.h"
 #include "Poco/Mutex.h"
 #include "Poco/Event.h"
+#include "Poco/AtomicCounter.h"
 
 namespace Cumulus {
 
@@ -34,6 +35,8 @@ public:
 	void waitHandleEx(Task & task, bool wait=true);  
 
 	size_t qsize();
+	int peak_qsize();
+
 protected:
 	void terminate();
 	void giveHandle();
@@ -48,6 +51,7 @@ private:
 	bool					_stop;
 
 	std::queue<Task *> _queue;
+	Poco::AtomicCounter _peak_qsize;
 };
 
 

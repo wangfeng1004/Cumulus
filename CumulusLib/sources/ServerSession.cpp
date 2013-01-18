@@ -24,7 +24,7 @@
 #include "Poco/URI.h"
 #include "Poco/Format.h"
 #include "Poco/NumberFormatter.h"
-#include "string.h"
+#include <cstring>
 
 using namespace std;
 using namespace Poco;
@@ -32,12 +32,12 @@ using namespace Poco::Net;
 
 namespace Cumulus {
 
-ServerSession::ServerSession(UInt32 id,
+ServerSession::ServerSession(RTMFPServer & server, UInt32 id,
 				 UInt32 farId,
 				 const Peer& peer,
 				 const UInt8* decryptKey,
 				 const UInt8* encryptKey,
-				 Invoker& invoker) : Session(id,farId,peer,decryptKey,encryptKey,invoker),pTarget(NULL),_failed(false),_timesFailed(0),_timeSent(0),_nextFlowWriterId(0),_timesKeepalive(0),_pLastFlowWriter(NULL) {
+				 Invoker& invoker) : Session(server, id,farId,peer,decryptKey,encryptKey,invoker),pTarget(NULL),_failed(false),_timesFailed(0),_timeSent(0),_nextFlowWriterId(0),_timesKeepalive(0),_pLastFlowWriter(NULL) {
 	_pFlowNull = new FlowNull(this->peer,invoker,*this);
 	Session::writer().clear(11);
 }

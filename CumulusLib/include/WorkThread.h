@@ -20,6 +20,7 @@
 #include "Cumulus.h"
 #include "Poco/RefCountedObject.h"
 #include "Poco/Thread.h"
+#include "Poco/Timestamp.h"
 
 namespace Cumulus {
 
@@ -28,6 +29,8 @@ public:
 	WorkThread() : priority(Poco::Thread::PRIO_NORMAL) {}
 	Poco::Thread::Priority priority;
 	virtual void run() = 0;
+public:
+	Poco::Timestamp tv0;
 };
 
 } // namespace Cumulus

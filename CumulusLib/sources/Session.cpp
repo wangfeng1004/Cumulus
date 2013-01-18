@@ -19,6 +19,7 @@
 #include "Logs.h"
 #include "Handshake.h"
 #include "Poco/Format.h"
+#include "RTMFPServer.h"
 #include <errno.h> // TODO remove this line!!
 
 using namespace std;
@@ -27,13 +28,13 @@ using namespace Poco::Net;
 
 namespace Cumulus {
 
-Session::Session(UInt32 id,
+Session::Session(RTMFPServer & server, UInt32 id,
 				 UInt32 farId,
 				 const Peer& peer,
 				 const UInt8* decryptKey,
 				 const UInt8* encryptKey,
 				 Invoker& invoker) :
-	invoker(invoker),nextDumpAreMiddle(false),_prevAESType(AESEngine::DEFAULT),_pSendingThread(NULL),_pReceivingThread(NULL),died(false),checked(false),id(id),farId(farId),peer(peer),aesDecrypt(decryptKey,AESEngine::DECRYPT),aesEncrypt(encryptKey,AESEngine::ENCRYPT),_pRTMFPSending(new RTMFPSending()) {
+	_server(server), invoker(invoker),nextDumpAreMiddle(false),_prevAESType(AESEngine::DEFAULT),_pSendingThread(NULL),_pReceivingThread(NULL),died(false),checked(false),id(id),farId(farId),peer(peer),aesDecrypt(decryptKey,AESEngine::DECRYPT),aesEncrypt(encryptKey,AESEngine::ENCRYPT),_pRTMFPSending(new RTMFPSending(server)) {
 	(*this->peer.addresses.begin())= peer.address.toString();
 }
 
@@ -89,12 +90,13 @@ void Session::send(UInt32 farId,DatagramSocket& socket,const SocketAddress& rece
 	_pRTMFPSending->pSocket = new DatagramSocket(socket);
 	_pRTMFPSending->address = receiver;
 	_pRTMFPSending->encoder = aesEncrypt.next(type);
+	_pRTMFPSending->tv0.update();
 	try {
 		_pSendingThread = invoker.poolThreads.enqueue(_pRTMFPSending.cast<WorkThread>(),_pSendingThread);
 	} catch(Exception& ex) {
 		WARN("Sending message refused on session %u : %s",id,ex.displayText().c_str());
 	}
-	_pRTMFPSending = new RTMFPSending();
+	_pRTMFPSending = new RTMFPSending(_server);
 }
 
 

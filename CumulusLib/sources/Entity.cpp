@@ -22,26 +22,5 @@ using namespace Poco;
 
 namespace Cumulus {
 
-Entity::Entity():id() {
-}
-
-Entity::~Entity() {
-}
-
-bool Entity::operator==(const Entity& other) const {
-	return memcmp(id,other.id,ID_SIZE)==0;
-}
-bool Entity::operator==(const UInt8* id) const {
-	return memcmp(this->id,id,ID_SIZE)==0;
-}
-
-bool Entity::operator!=(const Entity& other) const {
-	return memcmp(id,other.id,ID_SIZE)!=0;
-}
-bool Entity::operator!=(const UInt8* id) const {
-	return memcmp(this->id,id,ID_SIZE)!=0;
-}
-
-
 
 } // namespace Cumulus

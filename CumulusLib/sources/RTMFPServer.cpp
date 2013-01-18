@@ -27,7 +27,7 @@
 #include "Poco/LocalDateTime.h"
 #include "Poco/NumberFormatter.h"
 #include "Poco/String.h"
-#include "string.h"
+#include <cstring>
 
 
 using namespace std;
@@ -59,7 +59,7 @@ private:
 };
 
 
-RTMFPServer::RTMFPServer(UInt32 threads) : Startable("RTMFPServer"),_pCirrus(NULL),_handshake(*this,*this,*this),_sessions(*this),Handler(threads) {
+RTMFPServer::RTMFPServer(UInt32 threads) : Startable("RTMFPServer"),_pCirrus(NULL),_handshake(*this, *this,*this,*this),_sessions(*this),Handler(threads), tm_5m(300), peakRcvp(0), peakPsnd(0) {
 #ifndef POCO_OS_FAMILY_WINDOWS
 //	static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 //	RAND_seed(rnd_seed, sizeof(rnd_seed));
@@ -67,7 +67,7 @@ RTMFPServer::RTMFPServer(UInt32 threads) : Startable("RTMFPServer"),_pCirrus(NUL
 	DEBUG("Id of this RTMFP server : %s",Util::FormatHex(id,ID_SIZE).c_str());
 }
 
-RTMFPServer::RTMFPServer(const string& name,UInt32 threads) : Startable(name),_pCirrus(NULL),_handshake(*this,*this,*this),_sessions(*this),Handler(threads) {
+RTMFPServer::RTMFPServer(const string& name,UInt32 threads) : Startable(name),_pCirrus(NULL),_handshake(*this, *this,*this,*this),_sessions(*this),Handler(threads), tm_5m(300), peakRcvp(0), peakPsnd(0) {
 #ifndef POCO_OS_FAMILY_WINDOWS
 //	static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 //	RAND_seed(rnd_seed, sizeof(rnd_seed));
@@ -104,8 +104,13 @@ void RTMFPServer::start(RTMFPServerParams& params) {
 	if(_middle)
 		NOTE("RTMFPServer started in man-in-the-middle mode between peers (unstable debug mode)");
 
-	 (UInt32&)udpBufferSize = params.udpBufferSize==0 ? _socket.getReceiveBufferSize() : params.udpBufferSize;
-	_socket.setReceiveBufferSize(udpBufferSize);_socket.setSendBufferSize(udpBufferSize);
+	_pSocket = new DatagramSocket();
+	if (_pSocket == NULL) {
+		ERROR("RTMFPServer allocation of pSocket failed");
+	        return;	
+	}
+	 (UInt32&)udpBufferSize = params.udpBufferSize==0 ? _pSocket->getReceiveBufferSize() : params.udpBufferSize;
+	_pSocket->setReceiveBufferSize(udpBufferSize);_pSocket->setSendBufferSize(udpBufferSize);
 	NOTE("Socket buffer receiving/sending size = %u/%u", udpBufferSize, udpBufferSize);
 
 	(UInt32&)keepAliveServer = params.keepAliveServer<5 ? 5000 : params.keepAliveServer*1000;
@@ -122,15 +127,15 @@ void RTMFPServer::run() {
 
 	try {
 		_startDatetimeStr = DateTimeFormatter::format(LocalDateTime(), "%b %d %Y %H:%M:%S");
-		_socket.bind(SocketAddress("0.0.0.0",_port));
+		_pSocket->bind(SocketAddress("0.0.0.0",_port));
 		NOTE("RTMFP server sendbufsize %d recvbufsize %d recvtmo %d sendtmo %d", 
-				_socket.getSendBufferSize(),
-				_socket.getReceiveBufferSize(),
-				_socket.getReceiveTimeout().milliseconds(),
-				_socket.getSendTimeout().milliseconds()
+				_pSocket->getSendBufferSize(),
+				_pSocket->getReceiveBufferSize(),
+				_pSocket->getReceiveTimeout().milliseconds(),
+				_pSocket->getSendTimeout().milliseconds()
 				);
 
-		sockets.add(_socket,*this);  //_mainSockets
+		sockets.add(*_pSocket,*this);  //_mainSockets
 		NOTE("RTMFP server starts on %u port",_port);
 
 		if(_shellPort > 0) { 
@@ -154,7 +159,7 @@ void RTMFPServer::run() {
 		FATAL("RTMFPServer, unknown error");
 	}
 
-	sockets.remove(_socket); // _mainSockets
+	sockets.remove(*_pSocket); // _mainSockets
 
 	// terminate handle
 	terminate();
@@ -167,7 +172,7 @@ void RTMFPServer::run() {
 	poolThreads.clear();
 
 	// close UDP socket
-	_socket.close();
+	_pSocket->close();
 
 	// close shell command port 
 	if(_shellPort > 0) { 
@@ -182,6 +187,11 @@ void RTMFPServer::run() {
 	if(_pCirrus) {
 		delete _pCirrus;
 		_pCirrus = NULL;
+	}
+
+	if(_pSocket) {
+		delete _pSocket;
+		_pSocket = NULL;
 	}
 	
 	NOTE("RTMFP server stops");
@@ -224,6 +234,21 @@ void RTMFPServer::handle(bool& terminate){
 		terminate = true;
 }
 
+void RTMFPServer::status_string(std::string & s) {
+	s = "-------RTMFPServer-------\n"; 
+	s += "\tpeak_qsize: " + Poco::NumberFormatter::format(peak_qsize());
+	s += " run: " + Poco::NumberFormatter::format(running())
+	     + "\n"; 
+	s += "\tsessions_n: " + Poco::NumberFormatter::format(_sessions.count()) 
+	     + " sessions_n_peak: " + Poco::NumberFormatter::format(_sessions.peakCount) 
+	     + "\n";
+	s += "\trcvp: " + Poco::NumberFormatter::format(rcvpCnt > 0 ? (rcvpTm / rcvpCnt) : 0)  
+			+ " peak_rcvp: " + Poco::NumberFormatter::format(peakRcvp)
+			+ " psnd: " + Poco::NumberFormatter::format(psndCnt > 0 ? (psndTm / psndCnt) : 0)
+			+ " peak_psnd: " + Poco::NumberFormatter::format(peakPsnd)
+			+ "\n";
+}
+
 void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
 	if (!received) return;
 	std::string tmp;
@@ -234,17 +259,29 @@ void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
 
 	//std::string req(received->bufdata());
 	if (std::strcmp(received->bufdata(), "status") == 0) {
+#if 0
 		resp += "sessions_n: " + Poco::NumberFormatter::format(_sessions.count()) 
 			+ " sessions_n_peak: " + Poco::NumberFormatter::format(_sessions.peakCount) 
-			+ " task_handle_qsize: " + Poco::NumberFormatter::format(qsize())
+			+ " task_handle_peak_qsize: " + Poco::NumberFormatter::format(peak_qsize()) + "\n"
+			+ "rcvp: " + Poco::NumberFormatter::format(rcvpCnt > 0 ? (rcvpTm / rcvpCnt) : 0)  
+			+ " peak_rcvp: " + Poco::NumberFormatter::format(peakRcvp)
+			+ " psnd: " + Poco::NumberFormatter::format(psndCnt > 0 ? (psndTm / psndCnt) : 0)
+			+ " peak_psnd: " + Poco::NumberFormatter::format(peakPsnd)
 			+ "\n";
+#endif
 		poolThreads.status_string(tmp);
 		resp += tmp; 
 		sockets.status_string(tmp);
 		resp += tmp;
+		status_string(tmp);
+		resp += tmp;
 	}
 	else if (std::strcmp(received->bufdata(), "help") == 0) {
-		resp += "Commands: help status\n";
+		resp += "Commands: help status quit\n";
+	}
+	else if (std::strcmp(received->bufdata(), "quit") == 0) {
+		//resp += "Good bye\n";	
+		resp = "";	
 	}
 	else {
 		resp += "Please type in `help` for details.\n";
@@ -380,13 +417,13 @@ Session& RTMFPServer::createSession(const Peer& peer,Cookie& cookie) {
 
 	ServerSession* pSession;
 	if(pTarget) {
-		pSession = new Middle(_sessions.nextId(),cookie.farId,peer,cookie.decryptKey(),cookie.encryptKey(),*this,_sessions,*pTarget);
+		pSession = new Middle(*this, _sessions.nextId(),cookie.farId,peer,cookie.decryptKey(),cookie.encryptKey(),*this,_sessions,*pTarget);
 		if(_pCirrus==pTarget)
 			pSession->pTarget = cookie.pTarget;
 		DEBUG("Wait cirrus handshaking");
 		pSession->manage(); // to wait the cirrus handshake
 	} else {
-		pSession = new ServerSession(_sessions.nextId(),cookie.farId,peer,cookie.decryptKey(),cookie.encryptKey(),*this);
+		pSession = new ServerSession(*this, _sessions.nextId(),cookie.farId,peer,cookie.decryptKey(),cookie.encryptKey(),*this);
 		pSession->pTarget = cookie.pTarget;
 	}
 
@@ -405,6 +442,15 @@ void RTMFPServer::destroySession(Session& session) {
 void RTMFPServer::manage() {
 	_handshake.manage();
 	_sessions.manage();
+
+	--tm_5m;
+	if(tm_5m <= 0) {
+		tm_5m = 300;
+		rcvpCnt = 0;	
+		rcvpTm = 0;
+		psndCnt = 0;
+		psndTm = 0;
+	}
 }
 
 const Poco::Net::DatagramSocket & RTMFPServer::shellSocket() {

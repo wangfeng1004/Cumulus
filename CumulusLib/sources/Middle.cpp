@@ -25,7 +25,7 @@
 #include "Poco/RandomStream.h"
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include "string.h"
+#include <cstring>
 
 using namespace std;
 using namespace Poco;
@@ -33,14 +33,15 @@ using namespace Poco::Net;
 
 namespace Cumulus {
 
-Middle::Middle(UInt32 id,
+Middle::Middle(RTMFPServer & server,
+				UInt32 id,
 				UInt32 farId,
 				const Peer& peer,
 				const UInt8* decryptKey,
 				const UInt8* encryptKey,
 				Handler& handler,
 				const Sessions&	sessions,
-				Target& target) : ServerSession(id,farId,peer,decryptKey,encryptKey,(Invoker&)handler),_pMiddleAesDecrypt(NULL),_pMiddleAesEncrypt(NULL),_isPeer(target.isPeer),_middleId(0),_sessions(sessions),_firstResponse(false),_queryUrl("rtmfp://"+target.address.toString()+peer.path),_middlePeer(peer),_target(target) {
+				Target& target) : ServerSession(server, id,farId,peer,decryptKey,encryptKey,(Invoker&)handler),_pMiddleAesDecrypt(NULL),_pMiddleAesEncrypt(NULL),_isPeer(target.isPeer),_middleId(0),_sessions(sessions),_firstResponse(false),_queryUrl("rtmfp://"+target.address.toString()+peer.path),_middlePeer(peer),_target(target) {
 					
 	Util::UnpackUrl(_queryUrl,(string&)_middlePeer.path,(map<string,string>&)_middlePeer.properties);
 
@@ -487,7 +488,7 @@ void Middle::manage() {
 void Middle::onReadable(Socket& socket) {
 	if(died) {
 		invoker.sockets.remove(_socket);
-		_socket.close();
+		//_socket.close();
 		return;
 	}
 

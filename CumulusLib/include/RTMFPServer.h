@@ -68,8 +68,14 @@ public:
 
 	const Poco::Net::DatagramSocket & shellSocket();
 
+	void status_string(std::string & s); 
+
 protected:
 	virtual void    manage();
+
+public:
+	Poco::Int64 rcvpTm, rcvpCnt, psndTm, psndCnt;
+	Poco::Int64 peakRcvp, peakPsnd;
 
 private:
 	RTMFPServer(const std::string& name,Poco::UInt32 cores);
@@ -92,7 +98,7 @@ private:
 	Handshake					_handshake;
 
 	Poco::UInt16				_port;
-	Poco::Net::DatagramSocket	_socket;
+	Poco::Net::DatagramSocket	* _pSocket;
 
 	Poco::UInt16 _shellPort;
 	Poco::Net::DatagramSocket _shellSocket;
@@ -102,6 +108,7 @@ private:
 	Target*							_pCirrus;
 	Sessions						_sessions;
 //	MainSockets						_mainSockets;
+	int  tm_5m;	
 };
 
 inline Poco::UInt16 RTMFPServer::port() {

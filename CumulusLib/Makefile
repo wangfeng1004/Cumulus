@@ -1,7 +1,7 @@
 # source files.
-OBJECTS = Address AESEngine AMFObjectWriter AMFReader AMFSimpleObject AMFWriter BinaryReader BinaryStream BinaryWriter Client CookieComputing Cookie Cumulus Entity Flow FlowConnection FlowGroup FlowNull FlowStream FlowWriter Group Handshake Invoker Listener Logs MemoryStream Message Middle PacketReader PacketWriter Peer PoolThread PoolThreads Publication Publications QualityOfService RTMFP RTMFPReceiving RTMFPSending RTMFPServer ServerSession Session Sessions SocketManager Startable Streams Target Task TaskHandler Trigger Util
+OBJECTS = Address AESEngine AMFObjectWriter AMFReader AMFSimpleObject AMFWriter BinaryReader BinaryStream BinaryWriter Client CookieComputing Cookie Cumulus Flow FlowConnection FlowGroup FlowNull FlowStream FlowWriter Handshake Invoker Listener Logs MemoryStream Message Middle PacketReader PacketWriter Peer PoolThread PoolThreads Publication Publications QualityOfService RTMFP RTMFPReceiving RTMFPSending RTMFPServer ServerSession Session Sessions SocketManager Startable Streams Target Task TaskHandler Trigger Util
 
-CC=g++
+CC=g++4
 ifeq ($(shell uname -s),Darwin)
     LIB=libCumulus.dylib
 	SHARED=-dynamiclib -install_name ./../CumulusLib/$(LIB)

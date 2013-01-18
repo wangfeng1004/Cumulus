@@ -20,9 +20,9 @@
 #include "Poco/URI.h"
 #include "Poco/FileStream.h"
 #include "Poco/HexBinaryEncoder.h"
-#include "string.h"
+#include <cstring>
 #include <sstream>
-#include "math.h"
+#include <cmath>
 
 using namespace std;
 using namespace Poco;
@@ -40,9 +40,7 @@ Util::Util() {
 Util::~Util() {
 }
 
-bool Util::SameAddress(const SocketAddress& address1,const SocketAddress& address2) {
-	return memcmp(address1.addr(),address2.addr(),address1.length())==0 && address1.port() == address2.port();
-}
+
 
 
 string Util::FormatHex(const UInt8* data,UInt32 size) {

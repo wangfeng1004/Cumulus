@@ -44,14 +44,14 @@ private:
 	void	onReadable(Poco::Net::Socket& socket);
 	void	onError(const Poco::Net::Socket& socket,const std::string& error);
 
-	Poco::Net::ServerSocket		_socket;
+	Poco::Net::ServerSocket		*_pSocket;
 	Poco::UInt16				_port;
 
 	Poco::Mutex _mutex;
 };
 
 inline bool	TCPServer::running() {
-	return _port>0;
+	return _pSocket ? true : false;
 }
 
 inline Poco::UInt16	TCPServer::port() {
