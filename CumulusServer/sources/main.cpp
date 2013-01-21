@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <sys/resource.h>
 #endif
+#include "StatManager.h"
 
 #define LOG_SIZE 1000000
 
@@ -234,6 +235,7 @@ private:
 
 				Server server(*this,config());
 				server.start(_params);
+                StatManager::global.start();
 
 				// wait for CTRL-C or kill
 
@@ -255,6 +257,7 @@ private:
 #endif
 				
 				// Stop the server
+                StatManager::global.stop();
 				server.stop();
 			} catch(Exception& ex) {
 				FATAL("Configuration problem : %s",ex.displayText().c_str());

@@ -43,6 +43,7 @@ private:
 
 	Poco::UInt8					_buffer[PACKETSEND_SIZE];
 	RTMFPServer & _server;
+    Poco::Timestamp             _ts; 
 };
 
 } // namespace Cumulus

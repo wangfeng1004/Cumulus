@@ -39,14 +39,13 @@ public:
 	Poco::Net::DatagramSocket	socket;
 	PacketReader*				pPacket;
 
-	const char * bufdata();
-
 private:
 	void						handle();
 	void						run();
 
 	RTMFPServer&				_server;
 	Poco::UInt8					_buff[PACKETRECV_SIZE];
+    Poco::Timestamp             _ts; 
 };
 
 } // namespace Cumulus

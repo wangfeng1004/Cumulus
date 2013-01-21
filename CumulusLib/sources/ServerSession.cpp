@@ -25,6 +25,7 @@
 #include "Poco/Format.h"
 #include "Poco/NumberFormatter.h"
 #include <cstring>
+#include "StatManager.h"
 
 using namespace std;
 using namespace Poco;
@@ -177,10 +178,12 @@ void ServerSession::manage() {
 bool ServerSession::keepAlive() {
 	if(!peer.connected) {
 		fail("Timeout connection client");
+        StatManager::global.stat_data._timeoutConnection++;
 		return false;
 	}
 	DEBUG("Keepalive server");
 	if(_timesKeepalive==10) {
+        StatManager::global.stat_data._timeoutKeepalive++;
 		fail("Timeout keepalive attempts");
 		return false;
 	}
@@ -363,6 +366,7 @@ void ServerSession::packetHandler(PacketReader& packet) {
 		switch(type) {
 			case 0x0c :
 				fail("failed on client side");
+                StatManager::global.stat_data._failOnClient++;
 				break;
 
 			case 0x4c :
@@ -379,6 +383,7 @@ void ServerSession::packetHandler(PacketReader& packet) {
 					writeMessage(0x41,0);
 			case 0x41 :
 				_timesKeepalive=0;
+                StatManager::global.stat_data._keepAlive++;
 				break;
 
 			case 0x5e : {

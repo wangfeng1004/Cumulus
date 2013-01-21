@@ -1,5 +1,5 @@
 # source files.
-OBJECTS = Address AESEngine AMFObjectWriter AMFReader AMFSimpleObject AMFWriter BinaryReader BinaryStream BinaryWriter Client CookieComputing Cookie Cumulus Flow FlowConnection FlowGroup FlowNull FlowStream FlowWriter Handshake Invoker Listener Logs MemoryStream Message Middle PacketReader PacketWriter Peer PoolThread PoolThreads Publication Publications QualityOfService RTMFP RTMFPReceiving RTMFPSending RTMFPServer ServerSession Session Sessions SocketManager Startable Streams Target Task TaskHandler Trigger Util
+OBJECTS = AtomicCounter64 Address AESEngine AMFObjectWriter AMFReader AMFSimpleObject AMFWriter BinaryReader BinaryStream BinaryWriter Client CookieComputing Cookie Cumulus Flow FlowConnection FlowGroup FlowNull FlowStream FlowWriter Handshake Invoker Listener Logs MemoryStream Message Middle PacketReader PacketWriter Peer PoolThread PoolThreads Publication Publications QualityOfService RTMFP RTMFPReceiving RTMFPSending RTMFPServer ServerSession Session Sessions SocketManager Startable Streams Target Task TaskHandler Trigger Util StatManager
 
 CC=g++4
 ifeq ($(shell uname -s),Darwin)
@@ -14,6 +14,7 @@ CFLAGS+=-D CUMULUS_LOGS -g -O0 -MD
 LIBS ?= -L/usr/local/lib/ -lPocoFoundation -lPocoXML -lPocoUtil -lPocoNet -lcrypto -lssl
 INCLUDES = -I/usr/local/include/ -I./include/
 OBJECT = $(OBJECTS:%=%.o)
+OBJECTD = $(OBJECTS:%=%.d)
 
 .PHONY: all
 all: $(OBJECT)
@@ -31,4 +32,4 @@ all: $(OBJECT)
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 clean:
-	rm -f $(OBJECT) $(LIB)
+	rm -f $(OBJECT) $(OBJECTD) $(LIB)

@@ -27,6 +27,7 @@ namespace Cumulus {
 
 class SocketManaged;
 class SocketManager : private Poco::Net::SocketImpl, private Task, public Startable {
+    friend class StatManager;
 public:
 	SocketManager(TaskHandler& handler,const std::string& name="SocketManager");
 	virtual ~SocketManager();
@@ -37,7 +38,6 @@ public:
 	void launch();
 
 	TaskHandler * getTaskHandler(); 
-	void status_string(std::string & s);
 private:
 	void					run();
 	void					handle();

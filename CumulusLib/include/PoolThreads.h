@@ -25,6 +25,7 @@
 namespace Cumulus {
 
 class PoolThreads {
+    friend class StatManager;
 public:
 	PoolThreads(Poco::UInt32 threadsAvailable=0);
 	virtual ~PoolThreads();
@@ -35,8 +36,6 @@ public:
 	PoolThread*	enqueue(Poco::AutoPtr<WorkThread> pWork,PoolThread* pThread=NULL);
 
 	void launch();
-	void status_string(std::string &s);
-
 private:
 	std::vector<PoolThread*>	_threads;
 	Poco::FastMutex				_mutex;

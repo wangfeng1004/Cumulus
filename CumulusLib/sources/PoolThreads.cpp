@@ -70,15 +70,4 @@ PoolThread* PoolThreads::enqueue(AutoPtr<WorkThread> pWork,PoolThread* pThread) 
 	return pThread;
 }
 
-void PoolThreads::status_string(std::string &s) {
-	size_t i = 0;
-	s = "-------PoolThreads-------\n";
-	for(i = 0; i < _threads.size(); ++i) {
-		s += "\tthr[" + Poco::NumberFormatter::format(i) 
-			+ "] qsize: " +  Poco::NumberFormatter::format(_threads[i]->queue()) 
-			+ " run: " + Poco::NumberFormatter::format(_threads[i]->running()) 
-			+ "\n";
-	}
-}
-
 } // namespace Cumulus

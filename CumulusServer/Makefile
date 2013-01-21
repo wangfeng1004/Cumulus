@@ -9,7 +9,7 @@ SOURCES=./sources/
 CFLAGS+=-D CUMULUS_LOGS -g -O0 -MD
 LDFLAGS+="-Wl,-rpath,./../CumulusLib/,-rpath,/usr/local/lib/"
 #LIBS ?= -lCumulus -lPocoFoundation -lPocoXML -lPocoUtil -lPocoNet -lcrypto -lssl -lluajit-5.1
-LIBS ?= -lCumulus /usr/local/lib/libPocoUtil.a /usr/local/lib/libPocoNet.a /usr/local/lib/libPocoXML.a /usr/local/lib/libPocoFoundation.a /usr/local/lib/libluajit-5.1.a /usr/local/lib/libcrypto.a /usr/local/lib/libssl.a -pthread -ldl -lm
+LIBS ?= ../CumulusLib/libCumulus.a /usr/local/lib/libPocoUtil.a /usr/local/lib/libPocoNet.a /usr/local/lib/libPocoXML.a /usr/local/lib/libPocoFoundation.a /usr/local/lib/libluajit-5.1.a /usr/local/lib/libcrypto.a /usr/local/lib/libssl.a -pthread -ldl -lm
 
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
@@ -21,6 +21,7 @@ ifeq ($(OS),Darwin)
 endif
 
 OBJECT = $(OBJECTS:%=%.o)
+OBJECTD = $(OBJECTS:%=%.d)
 
 main: $(OBJECT)
 	echo creating CumulusServer executable $(EXEC)
@@ -35,5 +36,5 @@ main: $(OBJECT)
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 clean:
-	rm -f $(OBJECT) $(EXEC)
+	rm -f $(OBJECT) $(OBJECTD) $(EXEC)
 

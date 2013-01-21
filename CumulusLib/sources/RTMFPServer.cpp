@@ -28,6 +28,7 @@
 #include "Poco/NumberFormatter.h"
 #include "Poco/String.h"
 #include <cstring>
+#include "StatManager.h"
 
 
 using namespace std;
@@ -59,7 +60,7 @@ private:
 };
 
 
-RTMFPServer::RTMFPServer(UInt32 threads) : Startable("RTMFPServer"),_pCirrus(NULL),_handshake(*this, *this,*this,*this),_sessions(*this),Handler(threads), tm_5m(300), peakRcvp(0), peakPsnd(0) {
+RTMFPServer::RTMFPServer(UInt32 threads) : Startable("RTMFPServer"),_pCirrus(NULL),_handshake(*this, *this,*this,*this),_sessions(*this),Handler(threads){
 #ifndef POCO_OS_FAMILY_WINDOWS
 //	static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 //	RAND_seed(rnd_seed, sizeof(rnd_seed));
@@ -67,7 +68,7 @@ RTMFPServer::RTMFPServer(UInt32 threads) : Startable("RTMFPServer"),_pCirrus(NUL
 	DEBUG("Id of this RTMFP server : %s",Util::FormatHex(id,ID_SIZE).c_str());
 }
 
-RTMFPServer::RTMFPServer(const string& name,UInt32 threads) : Startable(name),_pCirrus(NULL),_handshake(*this, *this,*this,*this),_sessions(*this),Handler(threads), tm_5m(300), peakRcvp(0), peakPsnd(0) {
+RTMFPServer::RTMFPServer(const string& name,UInt32 threads) : Startable(name),_pCirrus(NULL),_handshake(*this, *this,*this,*this),_sessions(*this),Handler(threads){
 #ifndef POCO_OS_FAMILY_WINDOWS
 //	static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 //	RAND_seed(rnd_seed, sizeof(rnd_seed));
@@ -126,7 +127,6 @@ void RTMFPServer::start(RTMFPServerParams& params) {
 void RTMFPServer::run() {
 
 	try {
-		_startDatetimeStr = DateTimeFormatter::format(LocalDateTime(), "%b %d %Y %H:%M:%S");
 		_pSocket->bind(SocketAddress("0.0.0.0",_port));
 		NOTE("RTMFP server sendbufsize %d recvbufsize %d recvtmo %d sendtmo %d", 
 				_pSocket->getSendBufferSize(),
@@ -140,11 +140,13 @@ void RTMFPServer::run() {
 
 		if(_shellPort > 0) { 
 			_shellSocket.bind(SocketAddress("0.0.0.0", _shellPort));
-			sockets.add(_shellSocket, *this);
+			sockets.add(_shellSocket, StatManager::global);
 			NOTE("RTMFP server shell command portal on %u prot", _shellPort);
 		}
 
 		onStart();
+
+        StatManager::global.setRTMFPServer(this);
 
 		RTMFPManager manager(*this);
 		bool terminate=false;
@@ -206,11 +208,6 @@ void RTMFPServer::onReadable(Socket& socket) {
 	// Running on the thread of manager socket
 	AutoPtr<RTMFPReceiving> pRTMFPReceiving(new RTMFPReceiving(*this,(DatagramSocket&)socket));
 	if(!pRTMFPReceiving->pPacket) {
-		if(socket == shellSocket()) {
-			pRTMFPReceiving->duplicate();
-			pRTMFPReceiving->waitHandleEx(false);
-			return;
-		}
 		return;
 	}
 
@@ -222,6 +219,7 @@ void RTMFPServer::onReadable(Socket& socket) {
 	Session* pSession = _sessions.find(pRTMFPReceiving->id);
 	if(!pSession) {
 		WARN("Unknown session %u",pRTMFPReceiving->id);
+        StatManager::global.stat_data._unknownSession++;
 		return;
 	}
 	pSession->decode(pRTMFPReceiving);
@@ -234,71 +232,13 @@ void RTMFPServer::handle(bool& terminate){
 		terminate = true;
 }
 
-void RTMFPServer::status_string(std::string & s) {
-	s = "-------RTMFPServer-------\n"; 
-	s += "\tpeak_qsize: " + Poco::NumberFormatter::format(peak_qsize());
-	s += " run: " + Poco::NumberFormatter::format(running())
-	     + "\n"; 
-	s += "\tsessions_n: " + Poco::NumberFormatter::format(_sessions.count()) 
-	     + " sessions_n_peak: " + Poco::NumberFormatter::format(_sessions.peakCount) 
-	     + "\n";
-	s += "\trcvp: " + Poco::NumberFormatter::format(rcvpCnt > 0 ? (rcvpTm / rcvpCnt) : 0)  
-			+ " peak_rcvp: " + Poco::NumberFormatter::format(peakRcvp)
-			+ " psnd: " + Poco::NumberFormatter::format(psndCnt > 0 ? (psndTm / psndCnt) : 0)
-			+ " peak_psnd: " + Poco::NumberFormatter::format(peakPsnd)
-			+ "\n";
-}
-
-void RTMFPServer::handleShellCommand(RTMFPReceiving * received) {
-	if (!received) return;
-	std::string tmp;
-	std::string resp = "Cumulus server, build time: " __DATE__ " " __TIME__ ", start time: ";
-	resp += _startDatetimeStr;
-	resp += ", cur time: " + DateTimeFormatter::format(LocalDateTime(),"%b %d %Y %H:%M:%S");
-	resp += "\n";
-
-	//std::string req(received->bufdata());
-	if (std::strcmp(received->bufdata(), "status") == 0) {
-#if 0
-		resp += "sessions_n: " + Poco::NumberFormatter::format(_sessions.count()) 
-			+ " sessions_n_peak: " + Poco::NumberFormatter::format(_sessions.peakCount) 
-			+ " task_handle_peak_qsize: " + Poco::NumberFormatter::format(peak_qsize()) + "\n"
-			+ "rcvp: " + Poco::NumberFormatter::format(rcvpCnt > 0 ? (rcvpTm / rcvpCnt) : 0)  
-			+ " peak_rcvp: " + Poco::NumberFormatter::format(peakRcvp)
-			+ " psnd: " + Poco::NumberFormatter::format(psndCnt > 0 ? (psndTm / psndCnt) : 0)
-			+ " peak_psnd: " + Poco::NumberFormatter::format(peakPsnd)
-			+ "\n";
-#endif
-		poolThreads.status_string(tmp);
-		resp += tmp; 
-		sockets.status_string(tmp);
-		resp += tmp;
-		status_string(tmp);
-		resp += tmp;
-	}
-	else if (std::strcmp(received->bufdata(), "help") == 0) {
-		resp += "Commands: help status quit\n";
-	}
-	else if (std::strcmp(received->bufdata(), "quit") == 0) {
-		//resp += "Good bye\n";	
-		resp = "";	
-	}
-	else {
-		resp += "Please type in `help` for details.\n";
-	}
-
-	received->socket.sendTo(resp.c_str(), resp.length(), received->address, 0); 
-}
-
 void RTMFPServer::receive(RTMFPReceiving * rtmfpReceiving) {
 	// Process packet
 	if (!rtmfpReceiving) return;
-	if (rtmfpReceiving->socket == _shellSocket) {
-		return handleShellCommand(rtmfpReceiving);
-	}
 	Session* pSession = NULL;
 	if(rtmfpReceiving->id==0) {
 		DEBUG("Handshaking");
+        StatManager::global.stat_data._handShake++;
 		pSession = &_handshake;
 	} else
 		pSession = _sessions.find(rtmfpReceiving->id);
@@ -442,19 +382,6 @@ void RTMFPServer::destroySession(Session& session) {
 void RTMFPServer::manage() {
 	_handshake.manage();
 	_sessions.manage();
-
-	--tm_5m;
-	if(tm_5m <= 0) {
-		tm_5m = 300;
-		rcvpCnt = 0;	
-		rcvpTm = 0;
-		psndCnt = 0;
-		psndTm = 0;
-	}
 }
-
-const Poco::Net::DatagramSocket & RTMFPServer::shellSocket() {
-	return _shellSocket;
-} 
 
 } // namespace Cumulus

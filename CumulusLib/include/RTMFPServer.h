@@ -56,6 +56,7 @@ private:
 class RTMFPServer : private Gateway,protected Handler,private Startable,private SocketHandler {
 	friend class RTMFPManager;
 	friend class RTMFPReceiving;
+    friend class StatManager;
 public:
 	RTMFPServer(Poco::UInt32 threads=0);
 	virtual ~RTMFPServer();
@@ -65,10 +66,6 @@ public:
 	void stop();
 	Poco::UInt16 port();
 	bool running();
-
-	const Poco::Net::DatagramSocket & shellSocket();
-
-	void status_string(std::string & s); 
 
 protected:
 	virtual void    manage();
@@ -93,8 +90,6 @@ private:
 	void			onReadable(Poco::Net::Socket& socket);
 	void			onError(const Poco::Net::Socket& socket,const std::string& error);
 
-	void handleShellCommand(RTMFPReceiving * received);
-
 	Handshake					_handshake;
 
 	Poco::UInt16				_port;
@@ -102,13 +97,11 @@ private:
 
 	Poco::UInt16 _shellPort;
 	Poco::Net::DatagramSocket _shellSocket;
-	std::string _startDatetimeStr;
 
 	bool							_middle;
 	Target*							_pCirrus;
 	Sessions						_sessions;
 //	MainSockets						_mainSockets;
-	int  tm_5m;	
 };
 
 inline Poco::UInt16 RTMFPServer::port() {

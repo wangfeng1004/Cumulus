@@ -19,6 +19,7 @@
 #include "RTMFP.h"
 #include "Logs.h"
 #include "RTMFPServer.h"
+#include "StatManager.h"
 
 using namespace std;
 using namespace Poco;
@@ -37,6 +38,8 @@ RTMFPSending::~RTMFPSending() {
 }
 
 void RTMFPSending::run() {
+    StatManager::global.stat_data._sendPackets++;
+    _ts.update();
 	if(!pSocket) {
 		ERROR("Socket sending impossible on session %u impossible with a null socket",id);
 		return;
@@ -53,14 +56,9 @@ void RTMFPSending::run() {
 	} catch(...) {
 		 WARN("Socket sending unknown error on session %u",id);
 	}
-
-#if (__GNUC__ >= 4)  && (defined(__x86_64__) || defined(__i386__))
-	Poco::Timestamp tv1;
-	Poco::Timestamp::TimeDiff delta = tv1 - tv0;
-	Poco::Int64 tmp =  __sync_add_and_fetch(&_server.psndTm, delta) / __sync_add_and_fetch(&_server.psndCnt, 1);
-	if (__sync_fetch_and_add(&_server.peakPsnd, 0) < tmp)
-		_server.peakPsnd = tmp;
-#endif
+    Poco::Int64 cost = Poco::Int64(_ts.elapsed());
+    StatManager::global.stat_data._sendAccDuration += cost;
+    StatManager::global.stat_data._sendPeakCost.CompBigAndSwap(cost);
 }
 
 
