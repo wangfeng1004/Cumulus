@@ -382,11 +382,10 @@ void Middle::targetPacketHandler(PacketReader& packet) {
 			if(type==0x10) {
 				idFlow = content.read7BitLongValue();packetOut.write7BitLongValue(idFlow);
 				stage = content.read7BitLongValue();packetOut.write7BitLongValue(stage);
+				packetOut.write7BitLongValue(content.read7BitLongValue());
 			} else
 				++stage;
 
-			packetOut.write7BitLongValue(content.read7BitLongValue());
-			
 			if(!(flag&MESSAGE_WITH_BEFOREPART)) {
 
 				if(flag&MESSAGE_HEADER) {
@@ -409,8 +408,22 @@ void Middle::targetPacketHandler(PacketReader& packet) {
 					packetOut.write32(content.read32());
 					UInt16 a = content.read16(); packetOut.write16(a);
 					UInt32 b = content.read32(); packetOut.write32(b);
-					UInt32 c = content.read32(); packetOut.write32(c);
 					//TRACE("Bound %u : %u %u %u",idFlow,a,b,c);
+					if(content.available()>0) {
+						UInt32 c = content.read32(); packetOut.write32(c);
+						if(a!=0x22) {
+							DEBUG("Raw %llu : %.2x %u %u",idFlow,a,b,c)
+						} else {
+							TRACE("Bound %llu : %.2x %u %u",idFlow,a,b,c);
+						}
+					} else
+						DEBUG("Raw %llu : %.2x %u",idFlow,a,b)
+					
+				/*	if(a==0x1F) {
+						packetOut.reset(posType);
+						content.next(content.available());
+					}*/
+
 				}
 
 				if(flagType==0x0b && stage==0x01 && ((marker==0x4e && idFlow==0x03) || (marker==0x8e && idFlow==0x05))) {
