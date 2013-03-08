@@ -100,8 +100,6 @@ void SocketManager::add(Socket& socket,SocketHandler& handler) {
 	if(it!=_sockets.begin())
 		--it;
 	_sockets.insert(it,pair<const Socket*,SocketManaged*>(&socket,new SocketManaged(socket,handler)));
-//	if(!running())
-//		start();
 }
 
 void SocketManager::remove(const Socket& socket) {
@@ -116,6 +114,7 @@ void SocketManager::remove(const Socket& socket) {
 }
 
 void SocketManager::handle() {
+	ScopedLock<Mutex> lock(_mutex);
 	Socket::SocketList::iterator it;
 	SocketManaged*		pSocketManaged;
 	for (it = _readables.begin(); it != _readables.end(); ++it) {
@@ -198,9 +197,13 @@ void SocketManager::run() {
 			WARN("Socket error, %s",ex.displayText().c_str())
 		}
 		
-		handle(); //waitHandleEx();
+		try {
+			handle(); 
+		}
+		catch (Exception &ex) {
+			WARN("handle error, %s", ex.displayText().c_str());
+		}
 	}
-
 	
 }
 
@@ -215,6 +218,5 @@ void SocketManager::status_string(std::string & s) {
 	s += " run : " + Poco::NumberFormatter::format((int)running()); 
 	s += "\n";
 }
-
 
 } // namespace Cumulus
